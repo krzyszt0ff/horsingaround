@@ -16,6 +16,8 @@ coverage
 
 /cypress/videos/
 /cypress/screenshots/
+# Database connection
+.env
 
 # Editor directories and files
 .vscode/*

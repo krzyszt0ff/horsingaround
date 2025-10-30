@@ -2,9 +2,10 @@ import jwt from "jsonwebtoken";
 const JWT_SECRET = "bardzosekretnysekret";
 
 export function authMiddleware(req, res, next) {
+
   const authHeader = req.headers.authorization;
   if (!authHeader)
-    return res.status(401).json({ error: "No authorisation token" });
+    return res.status(401).json({ error: "No authorization header" });
 
   const token = authHeader.split(" ")[1];
   if (!token) {

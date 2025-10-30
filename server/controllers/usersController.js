@@ -1,9 +1,29 @@
+//To takie enumy
+const genders = Object.freeze({
+  male: "male",
+  female: "female",
+  other: "other"
+});
+
+const preferredGenders = Object.freeze({
+  male: "male",
+  female: "female",
+  other: "other",
+  maleAndFemale: "male_and_female",
+  all: "all"
+})
+
 export let users = [
-  {id:1, name: "Ala", age:22, bio: "Jestem Ala. Lubię konie"},
-  {id:2, name: "Paweł", age:28, bio: "Chcesz pojeździć na moim koniu?"},
-  {id:3, name: "Asia", age:21, bio: "Lubię błyszczyki"},
-  {id:4, name: "Michał", age: 22, bio: "Za pierwszą wypłatę zarobioną po politechnice kupię hobby horse'a"}
+  {id:1, name: "Ala", age:22, bio: "Jestem Ala. Lubię konie", gender: genders.other, 
+    preferred_gender: preferredGenders.all, location: [21.001, 53.001], preffered_distance: 20},
+  {id:2, name: "Paweł", age:28, bio: "Chcesz pojeździć na moim koniu?", gender: genders.male, 
+    preferred_gender: preferredGenders.female, location: [21.456, 53.123], preffered_distance: 10},
+  {id:3, name: "Asia", age:21, bio: "Lubię błyszczyki", gender: genders.female, 
+    preferred_gender: preferredGenders.male, location: [21.122, 53.087], preffered_distance: 50},
+  {id:4, name: "Michał", age: 22, bio: "Za pierwszą wypłatę zarobioną po politechnice kupię hobby horse'a", gender: genders.male, 
+    preferred_gender: preferredGenders.maleAndFemale, location: [21.056, 53.234], preffered_distance: 8}
 ];
+
 let currentId = Math.max(...users.map(u => u.id));
 
 //Pobieranie przefiltrowanych danych użytkowników, którym już można dać like'a

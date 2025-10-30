@@ -1,6 +1,7 @@
-var {users} = require("./usersController");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import {users} from './usersController.js'
+
 const JWT_SECRET = "bardzosekretnysekret";
 
 
