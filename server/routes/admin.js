@@ -1,5 +1,9 @@
 import express from 'express';
+<<<<<<< HEAD
 import { listReports, getReport, changeReportStatus, changeUserRole, listUsers } from '../controllers/adminController.js';
+=======
+import { listReports, getReport, changeReportStatus, changeUserRole, listUsers } from '../controllers/adminController';
+>>>>>>> d62c256 (Dodane modele, routery i kontrolery do obsługi funkcjonalności: matche, like'i, wiadomości, zgłoszenia)
 
 const router = express.Router();
 

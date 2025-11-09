@@ -164,12 +164,13 @@ export function updateUser(req, res) {
   res.json(users[idx]);
 }
 
-export function reportUser(req, res) { };
+export function reportUser(req, res){};
 
 
-export function likeUser(req, res) { };
+export function likeUser(req, res){};
 
 //Usunięcie swojego profilu przez zalogowanego użytkownika/administratora
+/*
 /*
 export function deleteUser(req, res) {
     const id = Number(req.params.id);
@@ -180,4 +181,6 @@ export function deleteUser(req, res) {
 
   users.splice(idx,1);
   res.status(204).send();
+}*/
+
 }*/

@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import { UserCredentials } from './UserCredentials.js';
 
 const userDataSchema = new mongoose.Schema({
-    user_id: {type: mongoose.Schema.Types.ObjectId, ref: UserCredentials ,required: true},
     name: {type: String, required: true},
     dateOfBirth: {type: Date, required: true},
     bio: {type: String, required: false},
@@ -22,6 +21,7 @@ const userDataSchema = new mongoose.Schema({
     preferred_distance: {type: Number, required: true},
     images_paths: {type: [String], required: true}
 
+});
 });
 
 userDataSchema.index({location: "2dsphere"})
