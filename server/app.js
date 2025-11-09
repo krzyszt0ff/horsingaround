@@ -2,9 +2,11 @@ import express from 'express';
 import morgan from 'morgan';
 import path from 'path';
 import cors from 'cors';
-import './db.js'
-import usersRouter from './routes/users.js'
-import authRouter from './routes/auth.js'
+import './db.js';
+import usersRouter from './routes/users.js';
+import authRouter from './routes/auth.js';
+import adminRouter from './routes/admin.js';
+import matchesRouter from './routes/matches.js';
 import { authMiddleware } from './middleware/authMiddleware.js';
 
 const PORT = 3000;
@@ -30,6 +32,8 @@ app.get(["/","/home"], (req, res) => {
 app.use(authMiddleware); 
 
 app.use('/api/users', usersRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/matches', matchesRouter);
 
 
 

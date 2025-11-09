@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const userDataSchema = new mongoose.Schema({
+    user_id: {type: String, required: true},
     name: {type: String, required: true},
     dateOfBirth: {type: Date, required: true},
     bio: {type: String, required: false},
@@ -19,7 +20,7 @@ const userDataSchema = new mongoose.Schema({
     preferred_distance: {type: number, required: true},
     images_paths: {type: [String], required: true}
 
-})
+});
 
 userDataSchema.index({location: "2dsphere"})
 export const UserData = mongoose.model("UserData", userDataSchema);
