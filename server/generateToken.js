@@ -6,7 +6,7 @@ const JWT_SECRET = "bardzosekretnysekret";
 const token = jwt.sign(
   { userId: "123", email: "test@example.com", isAdmin: false },
   JWT_SECRET,
-  { expiresIn: "1s" }
+  { expiresIn: "1h" }
 );
 
 console.log(token);

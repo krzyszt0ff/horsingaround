@@ -1,5 +1,5 @@
 import express from 'express';
-import { listReports, getReport, changeReportStatus, changeUserRole, listUsers } from '../controllers/adminController';
+import { listReports, getReport, changeReportStatus, changeUserRole, listUsers } from '../controllers/adminController.js';
 
 const router = express.Router();
 
