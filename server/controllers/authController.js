@@ -1,10 +1,10 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import {users} from './usersController.js'
+
 
 const JWT_SECRET = "bardzosekretnysekret";
 
-
+let users = []
 let userCredentials = [
     {userId: 1, email: "ala@gmail.com", passwordHash: "aaaaaaa", isAdmin: false},
     {userId: 2, email: "pawel@gmail.com", passwordHash: "bbbbbbb", isAdmin: false},

@@ -30,7 +30,6 @@ app.get(["/","/home"], (req, res) => {
 })
 
 app.use(authMiddleware); 
-
 app.use('/api/users', usersRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/matches', matchesRouter);

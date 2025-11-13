@@ -6,4 +6,4 @@ const userCredentialsSchema = new mongoose.Schema({
     role: {type: String, enum: ["user", "admin"], required: true}
 });
 
-export const UserCredentials = mongoose.model("UserCredentials", userDataSchema);
+export const UserCredentials = mongoose.model("UserCredentials", userCredentialsSchema);
