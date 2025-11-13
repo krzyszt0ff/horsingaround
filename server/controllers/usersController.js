@@ -164,10 +164,10 @@ export function updateUser(req, res) {
   res.json(users[idx]);
 }
 
-export function reportUser(req, res){};
+export function reportUser(req, res) { };
 
 
-export function likeUser(req, res){};
+export function likeUser(req, res) { };
 
 //Usunięcie swojego profilu przez zalogowanego użytkownika/administratora
 /*

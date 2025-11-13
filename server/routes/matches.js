@@ -1,5 +1,5 @@
 import express from 'express';
-import { listMatches, deleteMatch, listMessages, sendMessage } from '../controllers/matchesController';
+import { listMatches, deleteMatch, listMessages, sendMessage } from '../controllers/matchesController.js';
 
 const router = express.Router();
 
