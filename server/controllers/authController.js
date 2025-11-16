@@ -1,17 +1,14 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-
+import * as z from'zod';
+import { UserCredentials } from '../models/UserCredentials.js';
 
 const JWT_SECRET = "bardzosekretnysekret";
 
-let users = []
-let userCredentials = [
-    {userId: 1, email: "ala@gmail.com", passwordHash: "aaaaaaa", isAdmin: false},
-    {userId: 2, email: "pawel@gmail.com", passwordHash: "bbbbbbb", isAdmin: false},
-    {userId: 3, email: "asia@gmail.com", passwordHash: "ccccccc", isAdmin: false},
-    {userId: 4, email: "michal@gmail.com", passwordHash: "ddddddd", isAdmin: true}
-]
-let currentId = Math.max(...users.map(u => u.id));
+const credentialsSchema = z.object({
+    email: z.email(),
+    password: z.string().min(6)
+})
 
 //Funkcja do rejestracji użytkownika
 export async function register(req, res) {
