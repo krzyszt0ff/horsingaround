@@ -1,6 +1,15 @@
 import express from 'express';
+import path from 'path';
+import crypto from 'crypto';
+import multer from 'multer';
 import { listUsers, addUser, updateUser, showUser, showMyProfile, reportUser, likeUser } from '../controllers/usersController.js'
 
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, "/uploads"),
+    filename: (req, file, cb) => cb(null, `${crypto.randomBytes(16).toString("hex")}${path.extname(file.originalName)}`)
+})
+
+const upload = multer({storage});
 const router = express.Router();
 
 //zwraca przefiltrowaną wg preferencji listę użytkowników
@@ -22,12 +31,20 @@ router.get('/:id', showUser);
 router.get('/me', showMyProfile); 
 
 //zwraca utworzony profil użytkownika, kod statusu
-//INPUT: wszystkie pola z modelu UserData OPRÓCZ: user_id, location, images_paths; preferred_distance w km; format przekazania preferred_age i preferred_gender jest w modelu UserData
+//INPUT: UWAGA! MUSI BYĆ W multipart/form-data, NIE JSON!; 
+//  * wszystkie pola z modelu UserData OPRÓCZ: user_id, location, images_paths; 
+//  * preferred_distance w km; 
+//  * format przekazania preferred_age i preferred_gender jest w modelu UserData
 //OUTPUT: success, data (obiekt z danymi utworzonego profilu)
-router.post('/', addUser);
+router.post('/', upload.array('photos',10), addUser);
 
- //zwraca zmodyfikowany profil użytkownika, kod statusu | input: obiekt z wypełnionymi wszystkimi polami profilu użytkownika, nazwanymi zgodnie z modelem
-router.put('/:id', updateUser);
+//zwraca zaktualizowany profil użytkownika, kod statusu
+//INPUT: UWAGA! MUSI BYĆ W multipart/form-data, NIE JSON!; 
+//  * wszystkie pola z modelu UserData OPRÓCZ: user_id, location, images_paths; 
+//  * preferred_distance w km; 
+//  * format przekazania preferred_age i preferred_gender jest w modelu UserData
+//OUTPUT: success, data (obiekt z danymi utworzonego profilu)
+router.put('/:id', upload.array('photos',10), updateUser);
 
 //zwraca utworzone zgłoszenie, kod statusu
 router.post('/:id/report', reportUser);
