@@ -1,68 +1,78 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-
+import * as z from'zod';
+import { UserCredentials } from '../models/UserCredentials.js';
 
 const JWT_SECRET = "bardzosekretnysekret";
 
-let users = []
-let userCredentials = [
-    {userId: 1, email: "ala@gmail.com", passwordHash: "aaaaaaa", isAdmin: false},
-    {userId: 2, email: "pawel@gmail.com", passwordHash: "bbbbbbb", isAdmin: false},
-    {userId: 3, email: "asia@gmail.com", passwordHash: "ccccccc", isAdmin: false},
-    {userId: 4, email: "michal@gmail.com", passwordHash: "ddddddd", isAdmin: true}
-]
-let currentId = Math.max(...users.map(u => u.id));
+const credentialsSchema = z.object({
+    email: z.email(),
+    password: z.string().min(6)
+})
 
 //Funkcja do rejestracji użytkownika
 export async function register(req, res) {
-    //pola do przesłania w body requestu
-    const email = req.body.email;
-    const password = req.body.password;
 
-    if (!email || !password){
-        return res.status(400).json({error: "Required fields missing"});
+    const result = credentialsSchema.safeParse(req.body);
+
+    if (!result.success){
+        return res.status(400).json({success: false, error: z.flattenError(result.error)});
     }
 
-    if (userCredentials.findIndex(u => u.email === email)!=-1){
-        return res.status(409).json({error: "User already exists"});
-    }
+    const {email, password} = result.data;
+
+    const user = await UserCredentials.findOne({ email: email });
+    
+      if (user !== null) {
+        return res.status(409).json({ success: false, error: "User with such email already exists" });
+      }
 
     const passwordHash = await bcrypt.hash(password, 10);
 
     const newUserCredential = {
-        userId: ++currentId,
         email: email,
-        passwordHash: passwordHash,
-        isAdmin: false
+        password_hash: passwordHash,
+        role: "User"
     }
 
-    userCredentials.push(newUserCredential);
+    try {
+        const result = await UserCredentials.insertOne(newUserCredential);
+      }
+      catch (err) {
+        console.error(`An error occured while trying to insert new UserData object: ${err}`);
+        return res.status(500).json({ success: false, error: "A database error has occured" });
+      }
+    
+      const newUser = await UserCredentials.findOne({email: email});
 
-    res.status(201).json({res: "User created"});
+    res.status(201).json({success: true, user_id: newUser._id});
 }
 
+// funkcja do logowania użytkownika
 export async function login(req, res) {
-    const email = req.body.email;
-    const password = req.body.password;
 
-    if (!email || !password){
-        return res.status(400).json({error: "Required fields missing"});
+    const result = credentialsSchema.safeParse(req.body);
+
+    if (!result.success){
+        return res.status(400).json({success: false, error: z.flattenError(result.error)});
     }
 
-    const user = userCredentials.find(u => u.email===email);
+    const {email, password} = result.data;
 
-    if (!user){
-        return res.status(409).json({error: "Invalid email or password"});
-    } 
+    const user = await UserCredentials.findOne({ email: email });
+    
+    if (!user) {
+        return res.status(401).json({ success: false, error: "Invalid email or password"});
+    }
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
+    const valid = await bcrypt.compare(password, user.password_hash);
 
     if (!valid){
-        return res.status(401).json({message: "Invalid email or password"})
+        return res.status(401).json({success: false, error: "Invalid email or password"})
     }
 
     const token = jwt.sign(
-        {id: user.userId, email: user.email, isAdmin: user.isAdmin},
+        {userId: user._id, email: user.email, role: user.role},
         JWT_SECRET,
         {expiresIn: "1h"}
     )
