@@ -1,0 +1,181 @@
+<template>
+  <div class="signup-page">
+    <div class="form-box">
+      <h1>Upload your photos</h1>
+      <p class="desc">Add at least one photo to complete your profile</p>
+
+      <!--TODO: FIX THE PHOTO GRID-->
+      <div class="photo-grid">
+        <div
+          v-for="(photo, index) in photos"
+          :key="index"
+          class="photo-slot"
+          @click="uploadPhoto(index)"
+        >
+          <img v-if="photo" :src="photo" alt="Uploaded" />
+          <span v-else>+</span>
+        </div>
+      </div>
+
+      <button class="finish-btn" @click="handleFinish">Finish</button>
+
+      <p class="back">
+        <a @click.prevent="$router.push('/signup/step2')" href="#">← Back</a>
+      </p>
+
+      <!-- Ukryte pole pliku -->
+      <input
+        ref="fileInput"
+        type="file"
+        accept="image/*"
+        @change="handleFileChange"
+        style="display: none"
+      />
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useRegistrationStore } from '@/stores/registration';
+import { z } from 'zod';
+
+const store = useRegistrationStore()
+const router = useRouter()
+
+async function handleFinish() {
+  //currently using a placeholder image
+  store.updateStep('step3', {
+      images_paths: ['https://cdn-images.dzcdn.net/images/artist/c534b4a9fdcff6ac91ab3d18353c0185/1900x1900-000000-81-0-0.jpg']
+  })
+  storeAll = store.allData
+  console.log(storeAll)
+
+  router.push('/profile')
+}
+
+/*
+export default {
+  name: 'SignupStep3',
+  data() {
+    return {
+      photos: [null, null, null] // 3 sloty na zdjęcia
+    }
+  },
+  methods: {
+    uploadPhoto(index) {
+      this.activeIndex = index
+      this.$refs.fileInput.click()
+    },
+    handleFileChange(event) {
+      const file = event.target.files[0]
+      if (file) {
+        const reader = new FileReader()
+        reader.onload = e => {
+          this.$set(this.photos, this.activeIndex, e.target.result)
+        }
+        reader.readAsDataURL(file)
+      }
+    }
+  }
+}*/
+</script>
+
+<style scoped>
+.signup-page {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(180deg, #f8d7e0 0%, #fff 100%);
+  font-family: 'Poppins', sans-serif;
+}
+
+.form-box {
+  background: white;
+  padding: 3rem 4rem;
+  border-radius: 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 400px;
+}
+
+h1 {
+  color: #a94e74;
+  margin-bottom: 0.5rem;
+}
+
+.desc {
+  color: #777;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.photo-grid {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.photo-slot {
+  width: 100px;
+  height: 100px;
+  background: #f3f3f3;
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: 0.3s;
+}
+
+.photo-slot:hover {
+  border-color: #cf4e7d;
+  transform: scale(1.05);
+}
+
+.photo-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-slot span {
+  font-size: 2rem;
+  color: #cf4e7d;
+  font-weight: bold;
+}
+
+.finish-btn {
+  background: linear-gradient(90deg, #e67da8, #cf4e7d);
+  color: white;
+  border: none;
+  border-radius: 40px;
+  padding: 0.8rem 2.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.finish-btn:hover {
+  transform: scale(1.05);
+}
+
+.back {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.back a {
+  color: #cf4e7d;
+  text-decoration: none;
+}
+</style>
