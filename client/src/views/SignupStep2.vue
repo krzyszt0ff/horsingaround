@@ -3,29 +3,41 @@
     <div class="form-box">
       <h1>Personal info</h1>
 
-      <input type="text" placeholder="Your name" />
-      <select>
-        <option disabled selected>Gender</option>
-        <option>Female</option>
-        <option>Male</option>
-        <option>Other</option>
+      <input type="text" v-model="name" placeholder="Your name" />
+
+      <select v-model="gender">
+        <option disabled value="" selected>Gender</option>
+        <option v-for="opt in GENDER_OPTIONS"
+        :key="opt.value">{{ opt.label }}</option>
       </select>
 
-      <select>
-        <option disabled selected>Looking for</option>
-        <option>Female</option>
-        <option>Male</option>
-        <option>Both</option>
-      </select>
-
-      <label class="age-label">Age range:</label>
-      <div class="range-box">
-        <input type="number" min="18" max="99" placeholder="From" />
-        <span>-</span>
-        <input type="number" min="18" max="99" placeholder="To" />
+      <label>Looking for:</label>
+      <div class="checkbox-group">
+        <label
+          v-for="opt in GENDER_OPTIONS"
+          :key="opt.value"
+          class="checkbox-item"
+        >
+          <input
+            type="checkbox"
+            :value="opt.value"
+            v-model="preferredGenders"
+          />
+          {{ opt.label }}
+        </label>
       </div>
 
-      <button class="next-btn" @click="$router.push('/signup/step3')">Next</button>
+      <label>Your birth date</label>
+      <input v-model="dateOfBirth" type="date"/>
+      
+      <label>Age range:</label>
+      <div class="range-box">
+        <input type="number" v-model="age_min" min="18" max="99" placeholder="From" />
+        <span>-</span>
+        <input type="number" v-model="age_max" min="18" max="99" placeholder="To" />
+      </div>
+
+      <button class="next-btn" @click="handleNext">Next</button>
 
       <p class="back">
         <a @click.prevent="$router.push('/signup/step1')" href="#">← Back</a>
@@ -34,10 +46,71 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'SignupStep2'
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useRegistrationStore } from '@/stores/registration';
+import { GENDER_OPTIONS } from '@/constants/genders';
+import { z } from 'zod';
+
+const store = useRegistrationStore()
+const router = useRouter()
+
+const name = ref('')
+const gender = ref('')
+const preferredGenders = ref([])
+const dateOfBirth = ref('')
+const age_min = ref('')
+const age_max = ref('')
+
+const registrationSchema = z.object({
+  name: z.string().min(1, "Please insert your name!"),
+  gender: z.string().min(1, "Please select your gender!"),
+  preferredGenders: z.array(z.string()).min(1, "Please select your preferred genders!"),
+  dateOfBirth: z.string()
+    .refine(dateStr => {
+      const birth = new Date(dateStr);
+      const today = new Date();
+      const age =
+        today.getFullYear() - birth.getFullYear() -
+        (today.getMonth() < birth.getMonth() ||
+        (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate()) ? 1 : 0);
+
+      return age >= 18;
+    }, "You must be at least 18 years old!"),
+    age_min: z.number(),
+    age_max: z.number(),
+})
+.refine(data => data.age_min <= data.age_max, {
+    message: "Your minimal preferred age should be lower than the maximal!",
+  path: ["age_min"],
+});
+
+async function handleNext() {
+  const result = registrationSchema.safeParse({
+    name: name.value,
+    gender: gender.value,
+    preferredGenders: preferredGenders.value,
+    dateOfBirth: dateOfBirth.value,
+    age_min: age_min.value,
+    age_max: age_max.value,
+  });
+
+  if (!result.success) {
+    alert(result.error.issues[0].message);
+    return;
+  }
+
+  store.updateStep('step2', {
+    name: name,
+    dateOfBirth: dateOfBirth,
+    gender: gender,
+    preferred_gender: preferredGenders,
+    age_preference: [age_min, age_max]
+  })
+  router.push('/signup/step3')
 }
+
 </script>
 
 <style scoped>
@@ -93,7 +166,7 @@ select {
   text-align: center;
 }
 
-.age-label {
+label {
   font-size: 0.9rem;
   color: #666;
   align-self: flex-start;
@@ -124,5 +197,23 @@ select {
 .back a {
   color: #cf4e7d;
   text-decoration: none;
+}
+
+.checkbox-group {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  color: black;
+}
+
+.checkbox-item input{
+  width: auto;
+  margin-bottom: 0;
 }
 </style>

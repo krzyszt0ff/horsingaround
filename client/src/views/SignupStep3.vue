@@ -4,6 +4,7 @@
       <h1>Upload your photos</h1>
       <p class="desc">Add at least one photo to complete your profile</p>
 
+      <!--TODO: FIX THE PHOTO GRID-->
       <div class="photo-grid">
         <div
           v-for="(photo, index) in photos"
@@ -16,9 +17,7 @@
         </div>
       </div>
 
-      <button class="finish-btn" @click="$router.push('/profile')">
-        Finish
-      </button>
+      <button class="finish-btn" @click="handleFinish">Finish</button>
 
       <p class="back">
         <a @click.prevent="$router.push('/signup/step2')" href="#">← Back</a>
@@ -36,7 +35,27 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useRegistrationStore } from '@/stores/registration';
+import { z } from 'zod';
+
+const store = useRegistrationStore()
+const router = useRouter()
+
+async function handleFinish() {
+  //currently using a placeholder image
+  store.updateStep('step3', {
+      images_paths: ['https://cdn-images.dzcdn.net/images/artist/c534b4a9fdcff6ac91ab3d18353c0185/1900x1900-000000-81-0-0.jpg']
+  })
+  storeAll = store.allData
+  console.log(storeAll)
+
+  router.push('/profile')
+}
+
+/*
 export default {
   name: 'SignupStep3',
   data() {
@@ -60,7 +79,7 @@ export default {
       }
     }
   }
-}
+}*/
 </script>
 
 <style scoped>

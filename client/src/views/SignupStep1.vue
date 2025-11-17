@@ -2,11 +2,11 @@
   <div class="signup-page">
     <div class="form-box">
       <h1>Sign up</h1>
-      <input type="email" placeholder="E-mail address" />
-      <input type="password" placeholder="Password" />
-      <input type="password" placeholder="Repeat password" />
+      <input type="email" v-model="email" placeholder="E-mail address" />
+      <input type="password" v-model="password" placeholder="Password" />
+      <input type="password" v-model="repeatPassword" placeholder="Repeat password" />
 
-      <button class="next-btn" @click="$router.push('/signup/step2')">Next</button>
+      <button class="next-btn" @click="handleNext">Next</button>
 
       <p class="alt">
         Already have an account?
@@ -16,10 +16,48 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'SignupStep1'
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useRegistrationStore } from '@/stores/registration'
+import { z } from 'zod';
+
+const store = useRegistrationStore()
+const router = useRouter()
+
+const email = ref('')
+const password = ref('')
+const repeatPassword = ref('')
+
+const registrationSchema = z.object({
+  email: z.email("Please enter a valid email"),
+  password: z.string().min(1, "Password is required"),
+  repeatPassword: z.string().min(1, "Please repeat your password"),
+})
+.refine(data => data.password === data.repeatPassword, {
+  message: "Passwords do not match",
+  path: ["repeatPassword"]
+});
+
+async function handleNext() {
+  const result = registrationSchema.safeParse({
+    email: email.value,
+    password: password.value,
+    repeatPassword: repeatPassword.value,
+  });
+
+  if (!result.success) {
+    alert(result.error.issues[0].message);
+    return;
+  }
+
+  store.updateStep('step1', {
+    email: email,
+    password: password
+  })
+  router.push('/signup/step2')
 }
+
 </script>
 
 <style scoped>
