@@ -43,6 +43,7 @@ import { z } from 'zod';
 
 const store = useRegistrationStore()
 const router = useRouter()
+let storeAll = ref('')
 
 async function handleFinish() {
   //currently using a placeholder image
