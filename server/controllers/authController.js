@@ -6,9 +6,9 @@ import { UserCredentials } from '../models/UserCredentials.js';
 const JWT_SECRET = "bardzosekretnysekret";
 
 const credentialsSchema = z.object({
-    email: z.email(),
+    email: z.email().nonempty().trim().toLowerCase(),
     password: z.string().min(6)
-})
+});
 
 //Funkcja do rejestracji użytkownika
 export async function register(req, res) {
@@ -45,7 +45,13 @@ export async function register(req, res) {
     
       const newUser = await UserCredentials.findOne({email: email});
 
-    res.status(201).json({success: true, user_id: newUser._id});
+      const token = jwt.sign(
+        {userId: newUser._id, email: email, role: "User"},
+        JWT_SECRET,
+        {expiresIn: "1h"}
+    )
+
+    res.status(201).json({success: true, user_id: newUser._id, token: token});
 }
 
 // funkcja do logowania użytkownika
