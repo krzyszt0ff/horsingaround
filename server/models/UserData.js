@@ -14,7 +14,7 @@ const userDataSchema = new mongoose.Schema({
       required: true
     },
     coordinates: {
-      type: [Number],
+      type: [Number], // [longitude, latitude]
       required: true
     }},
     preferred_gender: {type: [String], required: true}, //jako lista, i wtedy we froncie użytkownik zaznacza tyle płci ile chce

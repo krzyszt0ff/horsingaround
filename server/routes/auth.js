@@ -5,7 +5,7 @@ const router = express.Router();
 
 //rejestracja nowego użytkownika
 //INPUT: pola w body: email, password
-//OUTPUT: success: true, user_id LUB success: false, error
+//OUTPUT: success: true, user_id, token LUB success: false, error
 router.post('/register', register);
 
 //rejestracja nowego użytkownika

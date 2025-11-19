@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { UserCredentials } from './UserCredentials';
+import { UserCredentials } from './UserCredentials.js';
 
 const likeSchema = new mongoose.Schema({
     from_user: {type: mongoose.Schema.Types.ObjectId, ref: UserCredentials, required: true},
