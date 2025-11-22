@@ -25,8 +25,6 @@ const userDataSchema = new mongoose.Schema({
     preferred_min_age: {type: Number, required: true},
     preferred_max_age: {type: Number, required: true},
     preferred_distance: {type: Number, required: true},
-    preferred_age: {type: [Number], required: true   }, // lista [min, max]
-    preferred_distance: {type: Number, required: true},
     images_paths: {type: [String], required: true}
 
 });
