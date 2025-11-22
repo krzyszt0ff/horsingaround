@@ -2,13 +2,9 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import * as z from'zod';
 import { UserCredentials } from '../models/UserCredentials.js';
+import { credentialsSchema } from '../schemas/credentialsSchema.js';
 
 const JWT_SECRET = "bardzosekretnysekret";
-
-const credentialsSchema = z.object({
-    email: z.email().nonempty().trim().toLowerCase(),
-    password: z.string().min(6)
-});
 
 //Funkcja do rejestracji użytkownika
 export async function register(req, res) {
@@ -36,7 +32,7 @@ export async function register(req, res) {
     }
 
     try {
-        const result = await UserCredentials.insertOne(newUserCredential);
+        const result = await UserCredentials.create(newUserCredential);
       }
       catch (err) {
         console.error(`An error occured while trying to insert new UserData object: ${err}`);
