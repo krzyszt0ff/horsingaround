@@ -4,14 +4,15 @@ import crypto from 'crypto';
 import multer from 'multer';
 import { listUsers, addUser, updateUser, showUser, showMyProfile, reportUser, likeUser } from '../controllers/usersController.js'
 
-
+const router = express.Router();
 
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, "/uploads"),
-    filename: (req, file, cb) => cb(null, `${crypto.randomBytes(16).toString("hex")}${path.extname(file.originalName)}`)
+    destination: (req, file, cb) => cb(null,  path.join(process.cwd(), './uploads/')),
+    filename: (req, file, cb) => cb(null, `${crypto.randomBytes(16).toString("hex")}${path.extname(file.originalname)}`)
 })
 
 const fileFilter = (req, file, cb) => {
+  console.log('Multer file mimetype:', file.mimetype);
   const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
   
   if (allowedMimeTypes.includes(file.mimetype)) {
@@ -22,7 +23,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({storage, fileFilter});
-const router = express.Router();
+
 
 //zwraca przefiltrowaną wg preferencji listę użytkowników
 //OUTPUT:
@@ -30,7 +31,7 @@ const router = express.Router();
 //      success: true,
 //      metadata: {totalCount (liczba wszystkich znalezionych profili), page (która porcja z wynikami została zwrócona), 
 //      page_size (ilość profili w jednej porcji)},
-//      data: [] (lista z obiektami z danymi profili, w tym z dodatkowym polem "age", zawierającym obliczony wiek oraz "distance", z obliczonym dystansem do tej osoby)
+//      data: [] (lista z obiektami z danymi profili, w tym z dodatkowym polem "age", zawierającym obliczony wiek oraz "distance_km", z obliczonym dystansem do tej osoby)
 //  * jeśli wystąpił błąd:
 //      success: false,
 //      error: "Opis błędu"
@@ -47,22 +48,30 @@ router.get('/:id', showUser);
 router.get('/me', showMyProfile); 
 
 //zwraca utworzony profil użytkownika, kod statusu
-//INPUT: UWAGA! MUSI BYĆ W multipart/form-data, NIE JSON!; 
+//INPUT: UWAGA! MUSI BYĆ W multipart/form-data, NIE JSON!; Potrzebne pola:
+//  * name
+//  * date_of_birth
+//  * bio 
+//  * gender
+//  * longitude
+//  * latitude
+//  * preferred_gender: jako lista, czyli robicie append do tego pola kilka razy, tyle ile jest wybranych płci
+//  * preferred_min_age: 
+//  * preferred_max_age:
+//  * preferred_distance: w kilometrach
 //  * wszystkie pola z modelu UserData OPRÓCZ: user_id, images_paths; 
-//  * lokalizację podajemy w polu coordinates jako listę [longitude, latitude];
-//  * preferred_distance w km; 
-//  * format przekazania preferred_age i preferred_gender jest w modelu UserData
+//  * zdjęcia wrzucamy do pola photos, też kilka razy jeśli jest kilka zdjęć
 //OUTPUT: success, data (obiekt z danymi utworzonego profilu)
-router.post('/', upload.array('photos',10), addUser);
+router.post('/', upload.array('photos'), addUser);
 
 //zwraca zaktualizowany profil użytkownika, kod statusu
 //INPUT
-//  * WSZYSTKIE pola, które zostały zmodyfikowane w profilu
+//  * analogicznie do tworzenia profilu (form-data i nazwy pól), ale nie trzeba wszystkich pól, tylko te zmienione wystarczą
 //  * WAŻNE!!! W przypadku modyfikacji zdjęć, przesyłacie w formdata TYLKO ZDJĘCIA NOWE (jeżeli są) 
-//    oraz w polu photos_to_delete listę ścieżek ze zdjęciami do usunięcia (o ile takie są)
-//    jeżeli nic w zdjęciach nie jest zmieniane, to wysyłacie zwykłego jsona tylko ze zmienionymi polami
+//    oraz w polu photos_to_delete listę ścieżek ze zdjęciami do usunięcia (o ile takie są),
+//    nie przesyłacie listy aktualnych zdjęć
 //OUTPUT: {success: true, profile: }
-router.patch('/:id', upload.array('photos',10), updateUser);
+router.patch('/:id', upload.array('photos'), updateUser);
 
 // zgłaszanie innego użytkownika
 //INPUT id zgłaszanego użytkownika w url

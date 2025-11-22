@@ -6,30 +6,8 @@ import { Report } from "../models/Report.js";
 import { getDistance } from 'geolib';
 import mongoose from 'mongoose';
 import * as z from 'zod';
-
-const genderEnum = z.enum(["male", "female", "other"]);
-
-const profileSchema = z.object({
-  name: z.string().min(3).max(30).trim(),
-  dateOfBirth: z.preprocess(val => {
-    const date = new Date(val);
-    return isNaN(date) ? undefined : date;
-  }, z.date()),
-  bio: z.string().max(300).optional().nullable(),
-  gender: genderEnum,
-  coordinates: z.tuple([
-    z.preprocess(val => parseFloat(val), z.number().min(-180).max(180)),
-    z.preprocess(val => parseFloat(val), z.number().min(-90).max(90))]),
-  preferred_gender: z.array(genderEnum).min(1),
-  preferred_age: z.tuple([
-    z.preprocess(val => parseInt(val), z.number().min(18).max(98)),
-    z.preprocess(val => parseInt(val), z.number().min(19).max(99))]).refine(
-      ([first, second]) => first < second,
-      { message: "The minimal age must be lower than the maximal age" }
-    ),
-  preferred_distance: z.preprocess(val => parseFloat(val), z.number().nonnegative().min(0.1).transform(val => Math.round(val * 10) / 10)),
-  images_paths: z.array(z.string()).min(1).optional()
-});
+import fs from 'fs';
+import { profileSchema } from "../schemas/profileSchema.js";
 
 
 function calculateAge(birthDate) {
@@ -48,13 +26,23 @@ function calculateAge(birthDate) {
   return age;
 };
 
+async function deleteUploadedFiles(files) {
+  try {
+    for (const file of files) {
+      await fs.promises.unlink(file.path);
+      console.log('Deleted file:', file.path);
+    }
+  } catch (err) {
+    console.error('Error deleting uploaded files:', err);
+  }
+}
+
 //Pobieranie przefiltrowanych danych użytkowników
-// dodać walidację
-// dodać zwracanie wieku i dystansu
-// dodać brak wyświetlania profili, z którymi już mamy matcha
 export async function listUsers(req, res) {
 
-  let { page } = req.query;
+  let page = parseInt(req.query.page, 10);
+  if (isNaN(page) || page < 1) page = 1;
+
   const page_size = 10;
   const user = req.user.userId;
 
@@ -64,11 +52,13 @@ export async function listUsers(req, res) {
     return res.status(404).json({ success: false, error: "User's profile cannot be found" });
   }
 
-  const { gender, location, preferred_gender, preferred_age, preferred_distance } = userProfile;
+  const { gender, location, preferred_gender, preferred_min_age, preferred_max_age, preferred_distance } = userProfile;
 
   const today = new Date();
-  const maxDate = new Date(today.getFullYear() - preferred_age[0], today.getMonth(), today.getDate());
-  const minDate = new Date(today.getFullYear() - preferred_age[1], today.getMonth(), today.getDate());
+  const maxDate = new Date(today.getFullYear() - preferred_min_age, today.getMonth(), today.getDate());
+  const minDate = new Date(today.getFullYear() - preferred_max_age, today.getMonth(), today.getDate());
+
+  const preferred_distance_m = preferred_distance * 1000;
 
   try {
     page = parseInt(page, 10) || 1;
@@ -76,16 +66,13 @@ export async function listUsers(req, res) {
     const users = await UserData.aggregate([
       {
         $geoNear: {
-          near: {
-            type: "Point",
-            coordinates: location
-          },
+          near: { type: "Point", coordinates: location },
           distanceField: "distance",
-          maxDistance: preferred_distance,
+          maxDistance: preferred_distance_m,
           query: {
             gender: { $in: preferred_gender },
             preferred_gender: gender,
-            dateOfBirth: { $gte: minDate, $lte: maxDate }
+            date_of_birth: { $gte: minDate, $lte: maxDate }
           },
           spherical: true
         }
@@ -94,13 +81,37 @@ export async function listUsers(req, res) {
         $addFields: {
           age: {
             $dateDiff: {
-              startDate: "$dateOfBirth",
+              startDate: "$date_of_birth",
               endDate: today,
               unit: "year"
             }
-          }
+          },
+          distance_km: { $round: [{ $divide: ["$distance", 1000] }, 1] }
         }
       },
+      {
+        $lookup: {
+          from: "Match",
+          let: { otherUserId: "$user_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $and: [{ $eq: ["$user_A", "$$otherUserId"] }, { $eq: ["$user_B", user] }] },
+                    { $and: [{ $eq: ["$user_B", "$$otherUserId"] }, { $eq: ["$user_A", user] }] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "existing_match"
+        }
+      },
+      {
+        $match: { existing_match: { $size: 0 } }
+      },
+      { $project: { existing_match: 0 } },
       {
         $facet: {
           metadata: [{ $count: "totalCount" }],
@@ -148,7 +159,7 @@ export async function showUser(req, res) {
     return res.status(404).json({ success: false, error: "User profile not found" });
   }
 
-  const age = calculateAge(otherUser.dateOfBirth);
+  const age = calculateAge(otherUser.date_of_birth);
   const distance = getDistance(
     { latitude: user.location.coordinates[1], longitude: user.location.coordinates[0] },
     { latitude: otherUser.location.coordinates[1], longitude: otherUser.location.coordinates[0] },
@@ -165,10 +176,10 @@ export async function showMyProfile(req, res) {
   const user = await UserData.findOne({ user_id: id });
 
   if (!user) {
-    return res.status(404).json({success: false, error: "User profile not found" });
+    return res.status(404).json({ success: false, error: "User profile not found" });
   }
 
-  const age = calculateAge(user.dateOfBirth);
+  const age = calculateAge(user.date_of_birth);
 
   res.json({ success: true, data: { user: user, age: age } });
 
@@ -177,49 +188,65 @@ export async function showMyProfile(req, res) {
 //Tworzenie danych profilu
 export async function addUser(req, res) {
 
+  console.log(req.files);
+  console.log(req.body);
   const id = req.user.userId;
 
   const result = profileSchema.safeParse(req.body);
 
-  if (!result.success){
-    return res.status(400).json({success: false, error: z.flattenError(result.error)});
+  if (!result.success) {
+    if (req.files && req.files.length > 0) {
+      await deleteUploadedFiles(req.files);
+    }
+    return res.status(400).json({ success: false, error: z.flattenError(result.error) });
   }
 
-  const { name, dateOfBirth, bio, gender, coordinates, preferred_gender, preferred_age, preferred_distance} = result.data;
-  const photos = req.files;
+  const { name, date_of_birth, bio, gender, longitude, latitude, preferred_gender, preferred_min_age, preferred_max_age, preferred_distance } = result.data;
+
+  const photos = req.files || [];
+
+  if (photos.length === 0) {
+    return res.status(400).json({ success: false, error: "At least one profile image is required" });
+  }
+
   let images_paths = [];
 
 
-  for (let i=0; i<photos.length; i++){
-    images_paths.push(photos[i].path);
+  for (let i = 0; i < photos.length; i++) {
+    images_paths.push(`/uploads/${photos[i].filename}`);
   };
 
+  const coordinates = [longitude, latitude];
 
   const user = await UserData.findOne({ user_id: id });
 
   if (user !== null) {
+    await deleteUploadedFiles(req.files);
     return res.status(409).json({ success: false, error: "User's profile already exists" });
   }
 
   const newProfile = {
     user_id: id,
     name: name,
-    dateOfBirth: dateOfBirth,
+    date_of_birth: date_of_birth,
     bio: bio,
     gender: gender,
     location: {
+      type: "Point",
       coordinates: coordinates
     },
     preferred_gender: preferred_gender,
-    preferred_age: preferred_age,
+    preferred_min_age: preferred_min_age,
+    preferred_max_age: preferred_max_age,
     preferred_distance: preferred_distance,
     images_paths: images_paths
   };
 
   try {
-    await UserData.insertOne(newProfile);
+    await UserData.create(newProfile);
   }
   catch (err) {
+    await deleteUploadedFiles(req.files);
     console.error(`An error occured while trying to insert new UserData object: ${err}`);
     return res.status(500).json({ success: false, error: "A database error has occured" });
   }
@@ -228,19 +255,18 @@ export async function addUser(req, res) {
 };
 
 //Aktualizacja danych w profilu zalogowanego użytkownika
-//DOKOŃCZYĆ
 export async function updateUser(req, res) {
 
   const id = req.params.id;
 
-  if (!mongoose.Types.ObjectId.isValid(id)){
-    return res.status(400).json({success: false, error: "Invalid user id"});
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ success: false, error: "Invalid user id" });
   }
 
-  const user = await UserData.findOne({user_id: id});
+  const user = await UserData.findOne({ user_id: id });
 
-  if (!user){
-    return res.status(404).json({success: false, error: "User profile not found"});
+  if (!user) {
+    return res.status(404).json({ success: false, error: "User profile not found" });
   }
 
   const patchSchema = profileSchema.partial();
@@ -249,27 +275,64 @@ export async function updateUser(req, res) {
   if (!result.success) {
     return res.status(400).json({ success: false, error: z.flattenError(result.error) });
   }
+
   const updateData = result.data;
 
-
-  
-  const photosToDelete = req.body.photos_to_delete || [];
-  let images = user.images_paths;
-
-  if (photosToDelete.length>0){
-    
+  if (updateData.latitude !== undefined && updateData.longitude !== undefined) {
+    updateData.location = {
+      coordinates: [updateData.longitude, updateData.latitude]
+    }
+    delete updateData.latitude;
+    delete updateData.longitude;
   }
 
-  const newPhotos = req.files;
+  else if (updateData.latitude !== undefined || updateData.longitude !== undefined) {
+    return res.status(400).json({success: false, error: "Both latitude and longitude must be provided"});
+  }
 
-  if (photos.length>0){
-    for (let i=0; i<photos.length;i++){
-      images.push(photos[i]);
+  let newUserImages = [...user.images_paths];
+  const photosToDelete = req.body.photos_to_delete || [];
+
+
+  if (photosToDelete.length > 0) {
+    newUserImages = newUserImages.filter(img => !photosToDelete.includes(img));
+  }
+
+  const newPhotos = req.files || [];
+
+  if (newPhotos.length > 0) {
+    for (let i = 0; i < newPhotos.length; i++) {
+      newUserImages.push(newPhotos[i].path);
     }
   }
 
+  if (newUserImages.length === 0) {
+    return res.status(400).json({ success: false, error: "At least one profile image is required" });
+  }
 
- 
+  if (photosToDelete.length > 0) {
+    photosToDelete.forEach(path => {
+      fs.unlink(path, err => {
+        if (err) console.error(`Failed to delete ${path}:`, err);
+      });
+    });
+  }
+
+
+  try {
+    const updatedUser = await UserData.findOneAndUpdate(
+      { user_id: id },
+      { $set: { ...updateData, images_paths: newUserImages } },
+      { new: true }
+    );
+
+    return res.json({ success: true, data: updatedUser });
+  } catch (err) {
+    console.error(`An error occured while trying to update the UserData object: ${err}`);
+    return res.status(500).json({ success: false, error: "A database error has occurred" });
+  }
+
+
 }
 
 
@@ -286,14 +349,14 @@ export async function reportUser(req, res) {
   const otherUser = await UserCredentials.findById(otherId);
 
   if (!otherUser) {
-    return res.status(404).json({success: false, error: "Reported user not found"});
+    return res.status(404).json({ success: false, error: "Reported user not found" });
   }
 
   const textContentSchema = z.string().trim().nonempty().optional();
   const result = textContentSchema.safeParse(req.body.text_content);
 
-  if (!result.success){
-    return res.status(400).json({success: false, error: z.flattenError(result.error)});
+  if (!result.success) {
+    return res.status(400).json({ success: false, error: z.flattenError(result.error) });
   }
 
   const textContent = result.data;
@@ -309,7 +372,7 @@ export async function reportUser(req, res) {
   };
 
   try {
-    await Report.insertOne(newReport)
+    await Report.create(newReport)
   }
   catch (err) {
     console.error(`An error occured while trying to insert new Report object: ${err}`);
@@ -344,9 +407,9 @@ export async function likeUser(req, res) {
 
   const like = await Like.findOne({ from_user: id, to_user: otherId });
   let newLike;
+  const now = new Date();
 
   if (!like) {
-    const now = new Date();
     newLike = {
       from_user: id,
       to_user: otherId,
@@ -354,7 +417,7 @@ export async function likeUser(req, res) {
     }
 
     try {
-      await Like.insertOne(newLike);
+      await Like.create(newLike);
     }
     catch (err) {
       console.error(`An error occured while trying to insert new Like object: ${err}`);
@@ -376,13 +439,13 @@ export async function likeUser(req, res) {
   }
 
   try {
-    await Match.insertOne(newMatch);
+    await Match.create(newMatch);
   } catch (err) {
     console.error(`An error occured while trying to insert new Match object: ${err}`);
     return res.status(500).json({ success: false, error: "A database error has occured" });
   }
 
-  const age = calculateAge(otherUser.dateOfBirth);
+  const age = calculateAge(otherUser.date_of_birth);
   const distance = getDistance(
     { latitude: user.location.coordinates[1], longitude: user.location.coordinates[0] },
     { latitude: otherUser.location.coordinates[1], longitude: otherUser.location.coordinates[0] },
