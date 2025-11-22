@@ -498,5 +498,3 @@ export function deleteUser(req, res) {
   users.splice(idx,1);
   res.status(204).send();
 }*/
-
-}*/

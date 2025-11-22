@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import { UserCredentials } from './UserCredentials.js';
-import { UserCredentials } from './UserCredentials.js';
 
 const userDataSchema = new mongoose.Schema({
     user_id: {type: mongoose.Schema.Types.ObjectId, ref: UserCredentials ,required: true},
@@ -14,8 +13,6 @@ const userDataSchema = new mongoose.Schema({
       enum: ['Point'],
       default: 'Point',
       required: true
-      default: 'Point',
-      required: true
     },
     coordinates: {
       type: [Number], // [longitude, latitude]
@@ -27,7 +24,6 @@ const userDataSchema = new mongoose.Schema({
     preferred_distance: {type: Number, required: true},
     images_paths: {type: [String], required: true}
 
-});
 });
 
 userDataSchema.index({location: "2dsphere"})
