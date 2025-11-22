@@ -8,7 +8,7 @@
       <select v-model="gender">
         <option disabled value="" selected>Gender</option>
         <option v-for="opt in GENDER_OPTIONS"
-        :key="opt.value">{{ opt.label }}</option>
+        :key="opt.value" :value="opt.value">{{ opt.label }}</option>
       </select>
 
       <label>Looking for:</label>

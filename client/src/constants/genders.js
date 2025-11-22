@@ -1,5 +1,5 @@
 export const GENDER_OPTIONS = [
-  { label: "Man", value: "man" },
-  { label: "Woman", value: "woman" },
+  { label: "Man", value: "male" },
+  { label: "Woman", value: "female" },
   { label: "Other", value: "other" }
 ];

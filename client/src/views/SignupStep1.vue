@@ -31,7 +31,7 @@ const repeatPassword = ref('')
 
 const registrationSchema = z.object({
   email: z.email("Please enter a valid email"),
-  password: z.string().min(1, "Password is required"),
+  password: z.string().min(6, "Password is required"),
   repeatPassword: z.string().min(1, "Please repeat your password"),
 })
 .refine(data => data.password === data.repeatPassword, {

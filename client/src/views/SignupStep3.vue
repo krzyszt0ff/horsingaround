@@ -12,7 +12,7 @@
           class="photo-slot"
           @click="uploadPhoto(index)"
         >
-          <img v-if="photo" :src="photo" alt="Uploaded" />
+          <img v-if="photoPreviews[index]" :src="photoPreviews[index]" alt="Uploaded"/>
           <span v-else>+</span>
         </div>
       </div>
@@ -39,48 +39,108 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useRegistrationStore } from '@/stores/registration';
-import { z } from 'zod';
+
+//=============
+//OBSŁUGA ZDJĘĆ
+//=============
+
+const photos = ref([null, null, null])
+const photoPreviews = ref([null, null, null])
+const activeIndex = ref(0)
+const fileInput = ref(null)
+
+function uploadPhoto(index) {
+  activeIndex.value = index
+  fileInput.value.click()
+}
+
+function handleFileChange(event) {
+  const file = event.target.files[0]
+  if (!file) return
+
+  photos.value[activeIndex.value] = file
+
+  photoPreviews.value[activeIndex.value] = URL.createObjectURL(file)
+}
+
+//===================
+//OBSŁUGA REJESTRACJI
+//===================
 
 const store = useRegistrationStore()
 const router = useRouter()
 let storeAll = ref('')
 
 async function handleFinish() {
-  //currently using a placeholder image
   store.updateStep('step3', {
-      images_paths: ['https://cdn-images.dzcdn.net/images/artist/c534b4a9fdcff6ac91ab3d18353c0185/1900x1900-000000-81-0-0.jpg']
+      photos: photos.value
   })
+
+  let credentialData;
   storeAll = store.allData
-  console.log(storeAll)
+  const default_distance = 60;
 
-  router.push('/profile')
-}
+  try{
+    const response = await fetch("http://localhost:3000/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: storeAll.email,
+        password: storeAll.password,
+      }),
+    });
 
-/*
-export default {
-  name: 'SignupStep3',
-  data() {
-    return {
-      photos: [null, null, null] // 3 sloty na zdjęcia
-    }
-  },
-  methods: {
-    uploadPhoto(index) {
-      this.activeIndex = index
-      this.$refs.fileInput.click()
-    },
-    handleFileChange(event) {
-      const file = event.target.files[0]
-      if (file) {
-        const reader = new FileReader()
-        reader.onload = e => {
-          this.$set(this.photos, this.activeIndex, e.target.result)
-        }
-        reader.readAsDataURL(file)
+    credentialData = await response.json();
+    console.log(credentialData);
+  } catch (error) {
+    console.log(error);
+  }
+
+  
+  if(credentialData.success){
+    try{
+      const userData = new FormData();
+      userData.append("name", storeAll.name);
+      userData.append("date_of_birth", storeAll.dateOfBirth);
+      userData.append("gender", storeAll.gender);
+      storeAll.preferred_gender.forEach(gender => {
+        userData.append("preferred_gender", gender);
+      });
+      userData.append("preferred_min_age", Number(storeAll.age_preference[0].value));
+      userData.append("preferred_max_age", Number(storeAll.age_preference[1].value));
+      userData.append("preferred_distance", default_distance);
+      storeAll.photos.forEach(photo => {
+        if (photo) userData.append("photos", photo);
+      });
+      userData.append("longitude", 0);
+      userData.append("latitude", 0);
+
+      const response = await fetch("http://localhost:3000/api/users/", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${credentialData.token}`,
+        },
+        body: userData,
+        
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        console.log("BACKEND ERROR:", text);
+        throw new Error(`HTTP ${response.status}`);
       }
+
+      const data = await response.json();
+      console.log(data);
+      router.push('/profile')
+    } catch (error) {
+      console.log(error);
     }
   }
-}*/
+
+  console.log(storeAll)
+}
 </script>
 
 <style scoped>
