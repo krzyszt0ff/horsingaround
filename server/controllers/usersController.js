@@ -7,6 +7,7 @@ import { getDistance } from 'geolib';
 import mongoose from 'mongoose';
 import * as z from 'zod';
 import fs from 'fs';
+import path from "path";
 import { profileSchema } from "../schemas/profileSchema.js";
 
 
@@ -44,7 +45,7 @@ export async function listUsers(req, res) {
   if (isNaN(page) || page < 1) page = 1;
 
   const page_size = 10;
-  const user = req.user.userId;
+  const user = new mongoose.Types.ObjectId(req.user.userId);
 
   const userProfile = await UserData.findOne({ user_id: user });
 
@@ -66,10 +67,11 @@ export async function listUsers(req, res) {
     const users = await UserData.aggregate([
       {
         $geoNear: {
-          near: { type: "Point", coordinates: location },
+          near: { type: "Point", coordinates: location.coordinates },
           distanceField: "distance",
           maxDistance: preferred_distance_m,
           query: {
+            user_id: { $ne: user },
             gender: { $in: preferred_gender },
             preferred_gender: gender,
             date_of_birth: { $gte: minDate, $lte: maxDate }
@@ -91,7 +93,7 @@ export async function listUsers(req, res) {
       },
       {
         $lookup: {
-          from: "Match",
+          from: "matches",
           let: { otherUserId: "$user_id" },
           pipeline: [
             {
@@ -131,6 +133,8 @@ export async function listUsers(req, res) {
   }
 
   catch (err) {
+    console.error('Error name:', err.name);
+    console.error('Error message:', err.message);
     return res.status(500).json({ success: false, error: "A database error has occured" });
   }
 
@@ -153,6 +157,10 @@ export async function showUser(req, res) {
     return res.status(400).json({ success: false, error: "Invalid user id" });
   };
 
+  if (otherId === id) {
+    return res.status(400).json({ success: false, error: "You cannot display your own profile with this endpoint" });
+  }
+
   const otherUser = await UserData.findOne({ user_id: otherId });
 
   if (!otherUser) {
@@ -165,7 +173,7 @@ export async function showUser(req, res) {
     { latitude: otherUser.location.coordinates[1], longitude: otherUser.location.coordinates[0] },
     100);
 
-  res.json({ success: true, data: { user: otherUser, age: age, distance: distance } });
+  res.json({ success: true, data: { user: otherUser, age: age, distance_km: distance / 1000 } });
 }
 
 //Pobieranie własnego profilu
@@ -258,14 +266,22 @@ export async function addUser(req, res) {
 export async function updateUser(req, res) {
 
   const id = req.params.id;
+  const userId = req.user.userId;
+
+  if (id!==userId){
+    await deleteUploadedFiles(req.files);
+    return res.status(400).json({success: false, error: "You cannot modify another users profile"});
+  }
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
+    await deleteUploadedFiles(req.files);
     return res.status(400).json({ success: false, error: "Invalid user id" });
   }
 
   const user = await UserData.findOne({ user_id: id });
 
   if (!user) {
+    await deleteUploadedFiles(req.files);
     return res.status(404).json({ success: false, error: "User profile not found" });
   }
 
@@ -273,6 +289,7 @@ export async function updateUser(req, res) {
   const result = patchSchema.safeParse(req.body);
 
   if (!result.success) {
+    await deleteUploadedFiles(req.files);
     return res.status(400).json({ success: false, error: z.flattenError(result.error) });
   }
 
@@ -287,7 +304,8 @@ export async function updateUser(req, res) {
   }
 
   else if (updateData.latitude !== undefined || updateData.longitude !== undefined) {
-    return res.status(400).json({success: false, error: "Both latitude and longitude must be provided"});
+    await deleteUploadedFiles(req.files);
+    return res.status(400).json({ success: false, error: "Both latitude and longitude must be provided together" });
   }
 
   let newUserImages = [...user.images_paths];
@@ -295,27 +313,37 @@ export async function updateUser(req, res) {
 
 
   if (photosToDelete.length > 0) {
-    newUserImages = newUserImages.filter(img => !photosToDelete.includes(img));
-  }
+  newUserImages = newUserImages.filter(img => {
+    const filename = path.basename(img);
+    return !photosToDelete.includes(filename);
+  });
+}
 
   const newPhotos = req.files || [];
 
   if (newPhotos.length > 0) {
     for (let i = 0; i < newPhotos.length; i++) {
-      newUserImages.push(newPhotos[i].path);
+      newUserImages.push(`/uploads/${newPhotos[i].filename}`);
     }
   }
 
   if (newUserImages.length === 0) {
+    await deleteUploadedFiles(req.files);
     return res.status(400).json({ success: false, error: "At least one profile image is required" });
   }
 
   if (photosToDelete.length > 0) {
-    photosToDelete.forEach(path => {
-      fs.unlink(path, err => {
-        if (err) console.error(`Failed to delete ${path}:`, err);
-      });
-    });
+    try {
+      await Promise.all(
+        photosToDelete.map(path =>
+          fs.promises.unlink(path).catch(err =>
+            console.error(`Failed to delete ${path}:`, err)
+          )
+        )
+      );
+    } catch (err) {
+      console.error('Error deleting photos:', err);
+    }
   }
 
 
@@ -328,6 +356,7 @@ export async function updateUser(req, res) {
 
     return res.json({ success: true, data: updatedUser });
   } catch (err) {
+    await deleteUploadedFiles(req.files);
     console.error(`An error occured while trying to update the UserData object: ${err}`);
     return res.status(500).json({ success: false, error: "A database error has occurred" });
   }
@@ -451,7 +480,7 @@ export async function likeUser(req, res) {
     { latitude: otherUser.location.coordinates[1], longitude: otherUser.location.coordinates[0] },
     100);
 
-  res.status(201).json({ success: true, like: newLike, match_created: true, match: newMatch, user: { profile: otherUser, age: age, distance: distance } });
+  res.status(201).json({ success: true, like: newLike, match_created: true, match: newMatch, user: { profile: otherUser, age: age, distance_km: distance / 1000 } });
 
 };
 
