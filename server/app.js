@@ -8,12 +8,13 @@ import authRouter from './routes/auth.js';
 import adminRouter from './routes/admin.js';
 import matchesRouter from './routes/matches.js';
 import { authMiddleware } from './middleware/authMiddleware.js';
+import { initWS } from './ws.js';
+import http from 'http';
 
 const PORT = 3000;
 
-
-
 var app = express();
+
 
 app.use(cors({
   origin: "http://localhost:5173"
@@ -50,9 +51,15 @@ app.use((err, req, res, next) => {
 });
 
 
-app.listen(PORT, () =>{
-  console.log(`Server running at http://localhost:${PORT} `);
-});
+//app.listen(PORT, () =>{
+//  console.log(`Server running at http://localhost:${PORT} `);
+//});
 
+const server = http.createServer(app);
+initWS(server);
+
+server.listen(PORT, () => {
+  console.log("WebSocket and server are now running on port ${PORT}");
+});
 
 export default app;
