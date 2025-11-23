@@ -1,6 +1,7 @@
 import { success } from "zod";
 import { Match } from "../models/Match.js";
 import { UserCredentials } from "../models/UserCredentials.js";
+import { Message } from "../models/Message.js";
 
 export async function listMatches(req,res){
     try {
@@ -61,22 +62,27 @@ export async function deleteMatch(req,res){
 
 export async function listMessages(req, res){
     try {
-        const { match_id } = req.params;
-        const uderId = req.user.userId;
-        const match = await Match.findById(match_id);
+        const { matchid } = req.params;
+        const userId = req.user.userId;
+        const match = await Match.findById(matchid);
+        if (!match) return res.status(404).json({ success: false, error: "Match not found" });
         const user = match.user_A._id.toString() === userId ? match.user_A : match.user_B; // Sprawdzamy nadawce 1 like z matcha i porównujemy z zalogownym użytkonikiem
         const messages = await Message.find({
+            match_id: matchid,
             $or: [
-                { from_user: match.user_A._id, to_user: match.user_B._id },
-                { from_user: match.user_B._id, to_user: match.user_A._id }
+                { from_user: match.user_A, to_user: match.user_B },
+                { from_user: match.user_B, to_user: match.user_A }
             ]
         }).sort({ created_at: -1 });
-        const addressee = match.user_A._id.toString() === userId ? m.user_B : m.user_A;
+
+        const addressee = match.user_A.toString() === userId ? match.user_B : match.user_A;
+        const from_who = match.user_A.toString() === userId ? match.user_A : match.user_B;
 
         return res.status(200).json({
             success: true,
             data: messages,
-            to: addressee
+            to: addressee,
+            form: from_who
         })
 
     } catch (err) {
@@ -88,29 +94,40 @@ export async function listMessages(req, res){
     }
 };
 
-export function sendMessage(req, res){
+//export function sendMessage(req, res){
     // Lowkey nie kminie chyba, musze sie oswiecic jak to maa dobrze dzialac
-};
+//};
 
 export async function listChats(req, res){
     try {
-        const chats = await Promise.all(matches.map(async m => { // Wyszukujemy wszystkie matche + ostatnie wiadomości
-            const last_message = Message.findOne({
+        const userId = req.user.userId;
+        const matches = await Match.find({
+            $or: [
+                { user_A: userId },
+                { user_B: userId }
+            ]
+        })
+        .populate("user_A", "name images_paths")
+        .populate("user_B", "name images_paths");
+
+        const chats = await Promise.all(matches.map(async match => { // Wyszukujemy wszystkie matche + ostatnie wiadomości
+            const last_message = await Message.findOne({
+                match_id: match_id,
                 $or: [
-                    { from_user: m.user_A._id, to_user: m_user_B._id },
-                    { from_user: m.user_B._id, to_user: m_user_A._id }
+                    { from_user: match.user_A, to_user: match.user_B },
+                    { from_user: match.user_B, to_user: match.user_A }
                 ]
             }).sort({ created_at: -1 });
 
             // tlumczylem slowo nadawca zeby to napisacc
-            const addressee = m.user_A._id.toString() === userId ? m.user_B : m.user_A; // Jeżeli B to nasz użytkownik to przypisz A i odwrotnie
+            const addressee = match.user_A.toString() === userId ? match.user_B : match.user_A; // Jeżeli B to nasz użytkownik to przypisz A i odwrotnie
 
-            return {
-                match_id: m._id,
+            return { // TODO dodać zdjęcie główne użytkownika
+                match_id: match._id,
                 other_user: addressee,
                 last_message: last_message?.content || null,
                 last_message_date: last_message?.created_at || null,
-                match_date: m.created_at // Nie wiem, czy tego pola możnaa nie skipnąć i pobierać je przy sortowaniu (jeżeli to wpływa niekorzystnie na szybkość działania czy coś nwm nie znam się :((( ))))
+                match_date: match.created_at // Nie wiem, czy tego pola możnaa nie skipnąć i pobierać je przy sortowaniu (jeżeli to wpływa niekorzystnie na szybkość działania czy coś nwm nie znam się :((( ))))
             };
         }));
 
@@ -118,7 +135,7 @@ export async function listChats(req, res){
         chats.sort((a, b) => {
             const date_A = a.last_message_date ? new Date(a.last_message_date) : new Date(a.match_date);
             const date_B = b.last_message_date ? new Date(b.last_message_date) : new Date(b.match_date);
-            return date_B - date_A;
+            return new Date(date_B) - new Date(date_A);
         });
 
         return res.status(200).json({ success: true, data: chats });
