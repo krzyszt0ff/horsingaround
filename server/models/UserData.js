@@ -7,7 +7,7 @@ const userDataSchema = new mongoose.Schema({
     date_of_birth: {type: Date, required: true},
     bio: {type: String, required: false},
     gender: {type: String, enum: ["male", "female", "other"], required: true},
-    gender: {type: String, enum: ["male", "female", "other"], required: true},
+   
     location: {type: {
       type: String,
       enum: ['Point'],
