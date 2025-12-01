@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import crypto from 'crypto';
 import multer from 'multer';
+import { authMiddleware } from "../middleware/authMiddleware.js";
 import { listUsers, addUser, updateUser, showUser, showMyProfile, reportUser, likeUser } from '../controllers/usersController.js'
 
 const router = express.Router();
@@ -38,7 +39,7 @@ const upload = multer({storage, fileFilter});
 router.get('/', listUsers); 
 
 //zwraca profil aktualnie zalogowanego użytkownika, kod statusu
-router.get('/me', showMyProfile); 
+router.get('/me', authMiddleware, showMyProfile); 
 
 //zwraca profil użytkownika o podanym id, kod statusu
 //INPUT: w url id użytkownika, którego chcemy wyświetlić

@@ -1,9 +1,9 @@
 <template>
   <div class="profile-page">
-    <div class="profile-card">
-      <img class="profile-photo" src="@/assets/default-profile.png" alt="Profile" />
+    <div v-if="store.user" class="profile-card">
+      <img class="profile-photo" :src="'http://localhost:3000' + store.user.images_paths[0]" alt="Profile" />
 
-      <h1 class="profile-name">Agnieszka, 23</h1>
+      <h1 class="profile-name">{{ store.user.name }}, {{ store.age }}</h1>
       <p class="profile-desc">Miłośniczka koni  i długich przejażdżek o zachodzie słońca 🌅</p>
 
       <div class="buttons">
@@ -11,18 +11,29 @@
         <button class="logout-btn" @click="logout">Logout</button>
       </div>
     </div>
+    <div v-else class="profile-card">
+      <h1>Ładowanie...</h1>
+    </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ProfileView',
-  methods: {
-    logout() {
-      // tu później dodamy logikę czyszczenia tokena / sesji
-      this.$router.push('/login')
-    }
+<script setup>
+import { useUserStore } from '@/stores/user';
+import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter()
+const store = useUserStore();
+
+onMounted(async () => {
+  if (!store.user) {
+    await store.loadUser();
   }
+});
+
+function logout() {
+  store.logout();
+  router.push('/login')
 }
 </script>
 

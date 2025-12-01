@@ -39,15 +39,21 @@ export async function register(req, res) {
         return res.status(500).json({ success: false, error: "A database error has occured" });
       }
     
-      const newUser = await UserCredentials.findOne({email: email});
+    const newUser = await UserCredentials.findOne({email: email});
 
-      const token = jwt.sign(
+    const token = jwt.sign(
         {userId: newUser._id, email: email, role: "User"},
         JWT_SECRET,
         {expiresIn: "1h"}
     )
 
-    res.status(201).json({success: true, user_id: newUser._id, token: token});
+    res.cookie("token", token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: false, // DO LOKALNEGO HPSTINGU!!! normalnie process.env.NODE_ENV === "production"
+    });
+
+    return res.status(200).json({success: true});
 }
 
 // funkcja do logowania użytkownika
@@ -78,7 +84,15 @@ export async function login(req, res) {
         JWT_SECRET,
         {expiresIn: "1h"}
     )
-    return res.status(200).json({token});
+
+    res.cookie("session", token, {
+        httpOnly: true,
+        secure: false, // do lokalnego hostingu!!! normalnie true
+        sameSite: "strict",
+        maxAge: 1000 * 60 * 60 * 24
+    });
+
+    return res.status(200).json({success: true});
     
 }
 

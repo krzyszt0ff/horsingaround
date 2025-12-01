@@ -119,9 +119,7 @@ async function handleFinish() {
 
       const response = await fetch("http://localhost:3000/api/users/", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${credentialData.token}`,
-        },
+        credentials: "include",
         body: userData,
         
       });

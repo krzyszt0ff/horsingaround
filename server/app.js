@@ -1,3 +1,4 @@
+import cookieParser from "cookie-parser";
 import express from 'express';
 import morgan from 'morgan';
 import path from 'path';
@@ -11,15 +12,15 @@ import { authMiddleware } from './middleware/authMiddleware.js';
 
 const PORT = 3000;
 
-
-
 var app = express();
 
 app.use(cors({
-  origin: "http://localhost:5173"
+  origin: "http://localhost:5173",
+  credentials: true
 }));
 app.use(morgan("dev"));
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({extended: false}));
 app.use('/uploads', express.static('uploads'));
 
