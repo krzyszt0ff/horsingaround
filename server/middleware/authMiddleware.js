@@ -10,7 +10,7 @@ export function authMiddleware(req, res, next) {
 
   const token = authHeader.split(" ")[1];
   */
- const token = req.cookies.session;
+ const token = req.cookies.token;
  
   if (!token) {
     return res.status(401).json({ error: "Token missing" });

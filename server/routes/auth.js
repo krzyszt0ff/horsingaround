@@ -1,5 +1,5 @@
 import express from 'express';
-import {register, login} from '../controllers/authController.js'
+import {register, login, logout} from '../controllers/authController.js'
 
 const router = express.Router();
 
@@ -8,9 +8,13 @@ const router = express.Router();
 //OUTPUT: success: true, user_id, token LUB success: false, error
 router.post('/register', register);
 
-//rejestracja nowego użytkownika
+//logowanie istniejącego użytkownika
 //INPUT: pola w body: email, password
 //OUTPUT: success: true, token LUB success: false, error
 router.post('/login', login);
+
+//wylogowywanie zalogowanego użytkownika
+//OUTPUT: success: true, message LUB success: false, error
+router.post("/logout", logout);
 
 export default router;

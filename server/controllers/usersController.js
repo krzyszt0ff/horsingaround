@@ -198,7 +198,7 @@ export async function addUser(req, res) {
 
   console.log(req.files);
   console.log(req.body);
-  const id = req.user.userId;
+  const id = req.body.user_id;
 
   const result = profileSchema.safeParse(req.body);
 

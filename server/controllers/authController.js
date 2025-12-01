@@ -53,7 +53,7 @@ export async function register(req, res) {
     secure: false, // DO LOKALNEGO HPSTINGU!!! normalnie process.env.NODE_ENV === "production"
     });
 
-    return res.status(200).json({success: true});
+    return res.status(200).json({success: true, userId: newUser._id});
 }
 
 // funkcja do logowania użytkownika
@@ -85,7 +85,7 @@ export async function login(req, res) {
         {expiresIn: "1h"}
     )
 
-    res.cookie("session", token, {
+    res.cookie("token", token, {
         httpOnly: true,
         secure: false, // do lokalnego hostingu!!! normalnie true
         sameSite: "strict",
@@ -96,3 +96,18 @@ export async function login(req, res) {
     
 }
 
+export async function logout(req, res) {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,   // w dev false, w produkcji true
+      path: "/"        // musi być IDENTYCZNY jak przy ustawianiu
+    });
+
+    return res.status(200).json({ success: true, message: "Logged out" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    return res.status(500).json({ success: false, error: "Logout failed" });
+  }
+}

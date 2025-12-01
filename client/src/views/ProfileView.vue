@@ -31,9 +31,13 @@ onMounted(async () => {
   }
 });
 
-function logout() {
+async function logout() {
   store.logout();
-  router.push('/login')
+  await fetch("http://localhost:3000/api/auth/logout", {
+  method: "POST",
+  credentials: "include"
+  });
+  router.push('/')
 }
 </script>
 

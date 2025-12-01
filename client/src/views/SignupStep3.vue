@@ -83,6 +83,7 @@ async function handleFinish() {
   try{
     const response = await fetch("http://localhost:3000/api/auth/register", {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
       },
@@ -93,15 +94,10 @@ async function handleFinish() {
     });
 
     credentialData = await response.json();
-    console.log(credentialData);
-  } catch (error) {
-    console.log(error);
-  }
-
-  
-  if(credentialData.success){
-    try{
-      const userData = new FormData();
+    const newUserId = credentialData.userId;
+    if (!newUserId) throw new Error("No userId returned from register");
+    const userData = new FormData();
+      userData.append("user_id", credentialData.userId);
       userData.append("name", storeAll.name);
       userData.append("date_of_birth", storeAll.dateOfBirth);
       userData.append("gender", storeAll.gender);
@@ -117,28 +113,25 @@ async function handleFinish() {
       userData.append("longitude", 0);
       userData.append("latitude", 0);
 
-      const response = await fetch("http://localhost:3000/api/users/", {
+      const userResponse = await fetch("http://localhost:3000/api/users/", {
         method: "POST",
         credentials: "include",
         body: userData,
         
       });
-      if (!response.ok) {
-        const text = await response.text();
+      if (!userResponse.ok) {
+        const text = await userResponse.text();
         console.log("BACKEND ERROR:", text);
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error(`HTTP ${userResponse.status}`);
       }
 
-      const data = await response.json();
+      const data = await userResponse.json();
       console.log(data);
       router.push('/profile')
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  console.log(storeAll)
-}
+    console.log(credentialData);
+  } catch (error) {
+    console.log(error);
+  }}
 </script>
 
 <style scoped>
