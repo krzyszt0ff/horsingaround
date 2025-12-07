@@ -3,13 +3,24 @@
     <div class="form-box">
       <h1>Personal info</h1>
 
-      <input type="text" v-model="name" placeholder="Your name" />
+      <input
+        type="text"
+        v-model="name"
+        placeholder="Your name"
+      />
+      <p v-if="errors.name" class="error-text">{{ errors.name }}</p>
 
       <select v-model="gender">
-        <option disabled value="" selected>Gender</option>
-        <option v-for="opt in GENDER_OPTIONS"
-        :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        <option disabled value="">Gender</option>
+        <option
+          v-for="opt in GENDER_OPTIONS"
+          :key="opt.value"
+          :value="opt.value"
+        >
+          {{ opt.label }}
+        </option>
       </select>
+      <p v-if="errors.gender" class="error-text">{{ errors.gender }}</p>
 
       <label>Looking for:</label>
       <div class="checkbox-group">
@@ -26,16 +37,37 @@
           {{ opt.label }}
         </label>
       </div>
+      <p v-if="errors.preferredGenders" class="error-text">
+        {{ errors.preferredGenders }}
+      </p>
 
       <label>Your birth date</label>
-      <input v-model="dateOfBirth" type="date"/>
-      
+      <input v-model="dateOfBirth" type="date" />
+      <p v-if="errors.dateOfBirth" class="error-text">
+        {{ errors.dateOfBirth }}
+      </p>
+
       <label>Age range:</label>
       <div class="range-box">
-        <input type="number" v-model="age_min" min="18" max="99" placeholder="From" />
+        <input
+          type="number"
+          v-model="age_min"
+          min="18"
+          max="99"
+          placeholder="From"
+        />
         <span>-</span>
-        <input type="number" v-model="age_max" min="18" max="99" placeholder="To" />
+        <input
+          type="number"
+          v-model="age_max"
+          min="18"
+          max="99"
+          placeholder="To"
+        />
       </div>
+      <p v-if="errors.age_min || errors.age_max" class="error-text">
+        {{ errors.age_min || errors.age_max }}
+      </p>
 
       <button class="next-btn" @click="handleNext">Next</button>
 
@@ -53,40 +85,81 @@ import { useRegistrationStore } from '@/stores/registration';
 import { GENDER_OPTIONS } from '@/constants/genders';
 import { z } from 'zod';
 
-const store = useRegistrationStore()
-const router = useRouter()
+const store = useRegistrationStore();
+const router = useRouter();
 
-const name = ref('')
-const gender = ref('')
-const preferredGenders = ref([])
-const dateOfBirth = ref('')
-const age_min = ref('')
-const age_max = ref('')
+const name = ref('');
+const gender = ref('');
+const preferredGenders = ref([]);
+const dateOfBirth = ref('');
+const age_min = ref('');
+const age_max = ref('');
 
-const registrationSchema = z.object({
-  name: z.string().min(1, "Please insert your name!"),
-  gender: z.string().min(1, "Please select your gender!"),
-  preferredGenders: z.array(z.string()).min(1, "Please select your preferred genders!"),
-  dateOfBirth: z.string()
-    .refine(dateStr => {
-      const birth = new Date(dateStr);
-      const today = new Date();
-      const age =
-        today.getFullYear() - birth.getFullYear() -
-        (today.getMonth() < birth.getMonth() ||
-        (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate()) ? 1 : 0);
-
-      return age >= 18;
-    }, "You must be at least 18 years old!"),
-    age_min: z.number(),
-    age_max: z.number(),
-})
-.refine(data => data.age_min <= data.age_max, {
-    message: "Your minimal preferred age should be lower than the maximal!",
-  path: ["age_min"],
+// błędy walidacji
+const errors = ref({
+  name: '',
+  gender: '',
+  preferredGenders: '',
+  dateOfBirth: '',
+  age_min: '',
+  age_max: '',
 });
 
+// schemat walidacji
+const registrationSchema = z
+  .object({
+    name: z
+      .string()
+      .min(3, 'Your name must be at least 3 characters'),
+    gender: z
+      .string()
+      .min(1, 'Please select your gender!'),
+    preferredGenders: z
+      .array(z.string())
+      .min(1, 'Please select your preferred genders!'),
+    dateOfBirth: z
+      .string()
+      .refine((dateStr) => {
+        const birth = new Date(dateStr);
+        if (isNaN(birth.getTime())) return false;
+
+        const today = new Date();
+        const age =
+          today.getFullYear() -
+          birth.getFullYear() -
+          (today.getMonth() < birth.getMonth() ||
+          (today.getMonth() === birth.getMonth() &&
+            today.getDate() < birth.getDate())
+            ? 1
+            : 0);
+
+        return age >= 18;
+      }, 'You must be at least 18 years old!'),
+    age_min: z
+      .coerce
+      .number()
+      .min(18, 'Minimal age must be at least 18'),
+    age_max: z
+      .coerce
+      .number()
+      .min(18, 'Maximal age must be at least 18'),
+  })
+  .refine((data) => data.age_min <= data.age_max, {
+    message: 'Your minimal preferred age should be lower than the maximal!',
+    path: ['age_min'],
+  });
+
 async function handleNext() {
+  // wyczyść błędy
+  errors.value = {
+    name: '',
+    gender: '',
+    preferredGenders: '',
+    dateOfBirth: '',
+    age_min: '',
+    age_max: '',
+  };
+
   const result = registrationSchema.safeParse({
     name: name.value,
     gender: gender.value,
@@ -97,20 +170,25 @@ async function handleNext() {
   });
 
   if (!result.success) {
-    alert(result.error.issues[0].message);
+    result.error.issues.forEach((issue) => {
+      const field = issue.path[0];
+      if (field && errors.value[field] === '') {
+        errors.value[field] = issue.message;
+      }
+    });
     return;
   }
 
   store.updateStep('step2', {
-    name: name,
-    dateOfBirth: dateOfBirth,
-    gender: gender,
-    preferred_gender: preferredGenders,
-    age_preference: [age_min, age_max]
-  })
-  router.push('/signup/step3')
-}
+    name: name.value,
+    dateOfBirth: dateOfBirth.value,
+    gender: gender.value,
+    preferred_gender: preferredGenders.value,
+    age_preference: [age_min.value, age_max.value],
+  });
 
+  router.push('/signup/step3');
+}
 </script>
 
 <style scoped>
@@ -143,7 +221,7 @@ h1 {
 input,
 select {
   width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: 0.4rem;
   padding: 0.8rem;
   border-radius: 8px;
   border: 1px solid #ddd;
@@ -171,6 +249,15 @@ label {
   color: #666;
   align-self: flex-start;
   margin-bottom: 0.3rem;
+}
+
+/* wspólna klasa na błędy */
+.error-text {
+  width: 100%;
+  margin: 0 0 0.6rem 0;
+  font-size: 0.8rem;
+  color: #cf4e7d;
+  text-align: left;
 }
 
 .next-btn {
@@ -201,7 +288,7 @@ label {
 
 .checkbox-group {
   width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: 0.4rem;
 }
 
 .checkbox-item {
@@ -212,7 +299,7 @@ label {
   color: black;
 }
 
-.checkbox-item input{
+.checkbox-item input {
   width: auto;
   margin-bottom: 0;
 }

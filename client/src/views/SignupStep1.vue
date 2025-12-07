@@ -2,9 +2,27 @@
   <div class="signup-page">
     <div class="form-box">
       <h1>Sign up</h1>
-      <input type="email" v-model="email" placeholder="E-mail address" />
-      <input type="password" v-model="password" placeholder="Password" />
-      <input type="password" v-model="repeatPassword" placeholder="Repeat password" />
+
+      <input
+        type="email"
+        v-model="email"
+        placeholder="E-mail address"
+      />
+      <p v-if="errors.email" class="error-text">{{ errors.email }}</p>
+
+      <input
+        type="password"
+        v-model="password"
+        placeholder="Password"
+      />
+      <p v-if="errors.password" class="error-text">{{ errors.password }}</p>
+
+      <input
+        type="password"
+        v-model="repeatPassword"
+        placeholder="Repeat password"
+      />
+      <p v-if="errors.repeatPassword" class="error-text">{{ errors.repeatPassword }}</p>
 
       <button class="next-btn" @click="handleNext">Next</button>
 
@@ -19,27 +37,47 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useRegistrationStore } from '@/stores/registration'
+import { useRegistrationStore } from '@/stores/registration';
 import { z } from 'zod';
 
-const store = useRegistrationStore()
-const router = useRouter()
+const store = useRegistrationStore();
+const router = useRouter();
 
-const email = ref('')
-const password = ref('')
-const repeatPassword = ref('')
+const email = ref('');
+const password = ref('');
+const repeatPassword = ref('');
 
+// błędy przy polach
+const errors = ref({
+  email: '',
+  password: '',
+  repeatPassword: '',
+});
+
+// schemat walidacji
 const registrationSchema = z.object({
-  email: z.email("Please enter a valid email"),
-  password: z.string().min(6, "Password is required"),
-  repeatPassword: z.string().min(1, "Please repeat your password"),
-})
-.refine(data => data.password === data.repeatPassword, {
-  message: "Passwords do not match",
-  path: ["repeatPassword"]
+  email: z
+    .string()
+    .email('Email should look like example@gmail.com'),
+  password: z
+    .string()
+    .min(6, 'Password must be at least 6 characters'),
+  repeatPassword: z
+    .string()
+    .min(1, 'Please repeat your password'),
+}).refine((data) => data.password === data.repeatPassword, {
+  message: 'Passwords do not match',
+  path: ['repeatPassword'],
 });
 
 async function handleNext() {
+  // wyczyszczenie błędów
+  errors.value = {
+    email: '',
+    password: '',
+    repeatPassword: '',
+  };
+
   const result = registrationSchema.safeParse({
     email: email.value,
     password: password.value,
@@ -47,17 +85,23 @@ async function handleNext() {
   });
 
   if (!result.success) {
-    alert(result.error.issues[0].message);
+    result.error.issues.forEach(issue => {
+      const field = issue.path[0];
+      if (field && errors.value[field] === '') {
+        errors.value[field] = issue.message;
+      }
+    });
     return;
   }
 
+  // zapisujemy WARTOŚCI, nie referencje
   store.updateStep('step1', {
-    email: email,
-    password: password
-  })
-  router.push('/signup/step2')
-}
+    email: email.value,
+    password: password.value,
+  });
 
+  router.push('/signup/step2');
+}
 </script>
 
 <style scoped>
@@ -92,7 +136,7 @@ h1 {
 
 input {
   width: 100%;
-  margin-bottom: 1rem;
+  margin-bottom: 0.4rem;
   padding: 0.8rem;
   border-radius: 8px;
   border: 1px solid #ddd;
@@ -106,6 +150,15 @@ input:focus {
   box-shadow: 0 0 4px rgba(207, 78, 125, 0.3);
 }
 
+/* ładne błędy pod polami */
+.error-text {
+  width: 100%;
+  margin: -0.4rem 0 0.7rem 0;
+  font-size: 0.8rem;
+  color: #cf4e7d;
+  text-align: left;
+}
+
 .next-btn {
   background: linear-gradient(90deg, #e67da8, #cf4e7d);
   color: white;
@@ -116,6 +169,7 @@ input:focus {
   font-weight: 500;
   cursor: pointer;
   transition: 0.3s;
+  margin-top: 0.5rem;
 }
 
 .next-btn:hover {
