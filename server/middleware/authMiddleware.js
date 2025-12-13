@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
-const JWT_SECRET = "bardzosekretnysekret";
+export const JWT_SECRET = "bardzosekretnysekret"; //Potrzebuje go do dekodowania przy socketach
+
 
 export function authMiddleware(req, res, next) {
 
