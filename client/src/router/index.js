@@ -9,7 +9,7 @@ import SignupStep2 from '../views/SignupStep2.vue'
 import SignupStep3 from '../views/SignupStep3.vue'
 import LoginView from '../views/LoginView.vue'
 import ProfileView from '../views/ProfileView.vue'
-
+import DiscoverView from '../views/DiscoverView.vue';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -20,7 +20,7 @@ const router = createRouter({
     { path: '/signup/step2', name: 'signup-step2', component: SignupStep2 },
     { path: '/signup/step3', name: 'signup-step3', component: SignupStep3 },
     { path: '/profile', name: 'profile', component: ProfileView, meta: {requiresAuth: true} },
-
+    { path: '/discover', name: 'discover', component: DiscoverView, meta: { requiresAuth: true } },
     // zostawiamy "home" na przyszłość, np. do ekranu głównego po zalogowaniu
     { path: '/home', name: 'home', component: HomeView },
 
