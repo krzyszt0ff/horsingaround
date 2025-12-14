@@ -36,22 +36,6 @@
         <span>-</span>
         <input type="number" v-model="age_max" min="18" max="99" placeholder="To" />
       </div>
-      <p v-if="errors.age_min || errors.age_max" class="error-text">
-        {{ errors.age_min || errors.age_max }}
-      </p>
-      <label>Bio</label>
-      <textarea
-        class="bio-textarea"
-        v-model="bio"
-        placeholder="Tell us something about yourself..."
-        rows="3"
-      ></textarea>
-      <div class="bio-footer">
-        <p v-if="errors.bio" class="error-text">{{ errors.bio }}</p>
-        <span class="char-count" :class="{ 'limit-reached': bio.length > 500 }">
-          {{ bio.length }}/500
-        </span>
-      </div>
 
       <button class="next-btn" @click="handleNext">Next</button>
 
@@ -72,51 +56,25 @@ import { z } from 'zod';
 const store = useRegistrationStore()
 const router = useRouter()
 
-const name = ref('');
-const gender = ref('');
-const preferredGenders = ref([]);
-const dateOfBirth = ref('');
-const age_min = ref('');
-const age_max = ref('');
-const bio = ref('');
+const name = ref('')
+const gender = ref('')
+const preferredGenders = ref([])
+const dateOfBirth = ref('')
+const age_min = ref('')
+const age_max = ref('')
 
-// błędy walidacji
-const errors = ref({
-  name: '',
-  gender: '',
-  preferredGenders: '',
-  dateOfBirth: '',
-  age_min: '',
-  age_max: '',
-});
-
-// schemat walidacji
-const registrationSchema = z
-  .object({
-    name: z
-      .string()
-      .min(3, 'Your name must be at least 3 characters'),
-    gender: z
-      .string()
-      .min(1, 'Please select your gender!'),
-    preferredGenders: z
-      .array(z.string())
-      .min(1, 'Please select your preferred genders!'),
-    dateOfBirth: z
-      .string()
-      .refine((dateStr) => {
-        const birth = new Date(dateStr);
-        if (isNaN(birth.getTime())) return false;
-
-        const today = new Date();
-        const age =
-          today.getFullYear() -
-          birth.getFullYear() -
-          (today.getMonth() < birth.getMonth() ||
-          (today.getMonth() === birth.getMonth() &&
-            today.getDate() < birth.getDate())
-            ? 1
-            : 0);
+const registrationSchema = z.object({
+  name: z.string().min(1, "Please insert your name!"),
+  gender: z.string().min(1, "Please select your gender!"),
+  preferredGenders: z.array(z.string()).min(1, "Please select your preferred genders!"),
+  dateOfBirth: z.string()
+    .refine(dateStr => {
+      const birth = new Date(dateStr);
+      const today = new Date();
+      const age =
+        today.getFullYear() - birth.getFullYear() -
+        (today.getMonth() < birth.getMonth() ||
+        (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate()) ? 1 : 0);
 
       return age >= 18;
     }, "You must be at least 18 years old!"),
@@ -129,17 +87,6 @@ const registrationSchema = z
 });
 
 async function handleNext() {
-  // wyczyść błędy
-  errors.value = {
-    name: '',
-    gender: '',
-    preferredGenders: '',
-    dateOfBirth: '',
-    age_min: '',
-    age_max: '',
-    bio: '',
-  };
-
   const result = registrationSchema.safeParse({
     name: name.value,
     gender: gender.value,
@@ -147,7 +94,6 @@ async function handleNext() {
     dateOfBirth: dateOfBirth.value,
     age_min: age_min.value,
     age_max: age_max.value,
-    bio: bio.value,
   });
 
   if (!result.success) {
@@ -156,15 +102,13 @@ async function handleNext() {
   }
 
   store.updateStep('step2', {
-    name: name.value,
-    dateOfBirth: dateOfBirth.value,
-    gender: gender.value,
-    preferred_gender: preferredGenders.value,
-    age_preference: [age_min.value, age_max.value],
-    bio: bio.value,
-  });
-
-  router.push('/signup/step3');
+    name: name,
+    dateOfBirth: dateOfBirth,
+    gender: gender,
+    preferred_gender: preferredGenders,
+    age_preference: [age_min, age_max]
+  })
+  router.push('/signup/step3')
 }
 
 </script>
@@ -197,28 +141,15 @@ h1 {
 }
 
 input,
-select,
-.bio-textarea {
+select {
   width: 100%;
   margin-bottom: 1rem;
   padding: 0.8rem;
   border-radius: 8px;
   border: 1px solid #ddd;
   font-size: 1rem;
-  font-family: 'Poppins', sans-serif;
 }
-.bio-textarea {
-  resize: vertical;
-  min-height: 80px;
-  max-height: 150px;
-}
-.bio-footer {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-center;
-  margin-bottom: 1rem;
-}
+
 select {
   background-color: white;
 }
