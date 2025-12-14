@@ -60,7 +60,10 @@ export async function listUsers(req, res) {
   const minDate = new Date(today.getFullYear() - preferred_max_age, today.getMonth(), today.getDate());
 
   const preferred_distance_m = preferred_distance * 1000;
-
+//  maxDistance: preferred_distance_m, zmieniam na chwile
+/*gender: { $in: preferred_gender },
+            preferred_gender: gender,
+            date_of_birth: { $gte: minDate, $lte: maxDate }*/
   try {
     page = parseInt(page, 10) || 1;
 
@@ -75,6 +78,7 @@ export async function listUsers(req, res) {
             gender: { $in: preferred_gender },
             preferred_gender: gender,
             date_of_birth: { $gte: minDate, $lte: maxDate }
+            
           },
           spherical: true
         }
