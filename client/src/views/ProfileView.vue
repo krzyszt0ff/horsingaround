@@ -3,11 +3,11 @@
     <div class="profile-card">
       <img class="profile-photo" src="@/assets/default-profile.png" alt="Profile" />
 
-      <h1 class="profile-name">Agnieszka, 23</h1>
-      <p class="profile-desc">Miłośniczka koni  i długich przejażdżek o zachodzie słońca 🌅</p>
+      <h1 class="profile-name">{{ store.user.name }}, {{ store.age }}</h1>
+      <p class="profile-desc">{{ store.user.bio }}</p>
 
       <div class="buttons">
-        <button class="edit-btn">Edit profile</button>
+        <button class="edit-btn" @click="$router.push('/profile/edit')">Edit profile</button>
         <button class="logout-btn" @click="logout">Logout</button>
       </div>
     </div>

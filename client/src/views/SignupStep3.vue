@@ -92,8 +92,71 @@ async function handleFinish() {
       }),
     });
 
-    credentialData = await response.json();
-    console.log(credentialData);
+    const text = await response.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      data = {};
+    }
+    credentialData = data;
+
+    if (!response.ok || !credentialData.userId) {
+      // np. email już istnieje
+      errorMessage.value =
+        credentialData?.error ||
+        'Registration failed. This email may already be in use.';
+      console.log('REGISTER ERROR:', text);
+      return;
+    }
+
+    // 2. tworzenie profilu użytkownika
+    const userData = new FormData();
+    userData.append('user_id', credentialData.userId);
+    userData.append('name', storeAll.name);
+    userData.append('date_of_birth', storeAll.dateOfBirth);
+    userData.append('gender', storeAll.gender);
+
+    storeAll.preferred_gender.forEach((gender) => {
+      userData.append('preferred_gender', gender);
+    });
+
+    // po zmianach w step2 mamy zwykłe wartości, nie .value
+    userData.append(
+      'preferred_min_age',
+      Number(storeAll.age_preference[0])
+    );
+    userData.append(
+      'preferred_max_age',
+      Number(storeAll.age_preference[1])
+    );
+    userData.append('preferred_distance', default_distance);
+
+    storeAll.photos.forEach((photo) => {
+      if (photo) userData.append('photos', photo);
+    });
+
+    userData.append('longitude', 0);
+    userData.append('latitude', 0);
+    userData.append('bio', storeAll.bio);
+
+    const userResponse = await fetch('http://localhost:3000/api/users/', {
+      method: 'POST',
+      credentials: 'include',
+      body: userData,
+    });
+
+    if (!userResponse.ok) {
+      const text = await userResponse.text();
+      console.log('BACKEND ERROR:', text);
+      errorMessage.value =
+        'Could not create your profile. Please try again.';
+      return;
+    }
+
+    const createdUser = await userResponse.json();
+    console.log('USER CREATED:', createdUser);
+    router.push('/profile');
   } catch (error) {
     console.log(error);
   }

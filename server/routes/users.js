@@ -2,6 +2,8 @@ import express from 'express';
 import path from 'path';
 import crypto from 'crypto';
 import multer from 'multer';
+import { authMiddleware } from "../middleware/authMiddleware.js";
+import { UserData } from '../models/UserData.js';
 import { listUsers, addUser, updateUser, showUser, showMyProfile, reportUser, likeUser } from '../controllers/usersController.js'
 
 const router = express.Router();
@@ -23,7 +25,6 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({storage, fileFilter});
-
 
 //zwraca przefiltrowaną wg preferencji listę użytkowników
 //OUTPUT:
@@ -66,6 +67,69 @@ router.get('/:id', showUser);
 //OUTPUT: success, data (obiekt z danymi utworzonego profilu)
 router.post('/', upload.array('photos'), addUser);
 
+
+//zwraca zaktualizowany profil użytkownika (tylko dane tekstowe), kod statusu
+//INPUT: format multipart/form-data (używamy FormData na froncie), ale BEZ PLIKÓW!
+//  * name
+//  * bio
+//  * gender
+//  * date_of_birth
+//  * preferred_min_age
+//  * preferred_max_age
+//  * preferred_distance -- TO NARAZIE WYJEBAŁAM BO MI PSUJE TYLKO I NIE WIEM DLACZEGO BEDZIE TRZEBA TO SPRAWDZIĆ I POPRAWIĆ <3
+//  * preferred_gender: jako lista, czyli robicie append do tego pola kilka razy, tyle ile jest wybranych płci
+//  * WAŻNE: ID użytkownika jest pobierane automatycznie z tokena (musi być zalogowany), nie podajemy go w URL
+//OUTPUT: {success: true, data: (obiekt z danymi zaktualizowanego profilu)}
+router.put('/update-profile', authMiddleware, upload.none(), async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    if (!userId) {
+      throw new Error("Brak User ID w tokenie");
+    }
+    let { 
+      name, 
+      bio, 
+      gender, 
+      date_of_birth,
+      preferred_min_age, 
+      preferred_max_age,
+      preferred_gender 
+    } = req.body;
+    let genderArray = [];
+    if (preferred_gender) {
+      if (Array.isArray(preferred_gender)) {
+         genderArray = preferred_gender;
+      } else {
+         genderArray = [preferred_gender];
+      }
+    }
+    const updateData = {
+      name,
+      bio,
+      gender,
+      date_of_birth,
+      preferred_min_age: Number(preferred_min_age), 
+      preferred_max_age: Number(preferred_max_age), 
+      preferred_gender: genderArray
+    };
+    const updatedUser = await UserData.findOneAndUpdate(
+      { user_id: userId },
+      updateData,
+      { new: true, runValidators: true }
+    );
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "Profil nie znaleziony" });
+    }
+    res.status(200).json({ success: true, data: updatedUser });
+
+  } catch (error) {
+    console.error("!!! BŁĄD KRYTYCZNY W ROUTERZE !!!");
+    console.error(error); 
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+
 //zwraca zaktualizowany profil użytkownika, kod statusu
 //INPUT
 //  * analogicznie do tworzenia profilu (form-data i nazwy pól), ale nie trzeba wszystkich pól, tylko te zmienione wystarczą
@@ -75,6 +139,7 @@ router.post('/', upload.array('photos'), addUser);
 //  * jeżeli aktualizowane są współrzędne, to musi być przekazane longitude i latitude, nie tylko jedno!
 //OUTPUT: {success: true, profile: }
 router.patch('/:id', upload.array('photos'), updateUser);
+
 
 // zgłaszanie innego użytkownika
 //INPUT id zgłaszanego użytkownika w url, pocjonalnie text_content
