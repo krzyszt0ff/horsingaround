@@ -26,9 +26,7 @@ const router = useRouter()
 const store = useUserStore();
 
 onMounted(async () => {
-  if (!store.user) {
-    await store.loadUser();
-  }
+  await store.loadUser();
 });
 
 async function logout() {
