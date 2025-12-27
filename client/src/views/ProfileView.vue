@@ -4,10 +4,10 @@
       <img class="profile-photo" :src="'http://localhost:3000' + store.user.images_paths[0]" alt="Profile" />
 
       <h1 class="profile-name">{{ store.user.name }}, {{ store.age }}</h1>
-      <p class="profile-desc">Miłośniczka koni  i długich przejażdżek o zachodzie słońca 🌅</p>
+      <p class="profile-desc">{{ store.user.bio }}</p>
 
       <div class="buttons">
-        <button class="edit-btn">Edit profile</button>
+        <button class="edit-btn" @click="$router.push('/profile/edit')">Edit profile</button>
         <button class="logout-btn" @click="logout">Logout</button>
       </div>
     </div>
@@ -26,9 +26,7 @@ const router = useRouter()
 const store = useUserStore();
 
 onMounted(async () => {
-  if (!store.user) {
-    await store.loadUser();
-  }
+  await store.loadUser();
 });
 
 async function logout() {
