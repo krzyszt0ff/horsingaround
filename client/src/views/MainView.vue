@@ -1,13 +1,7 @@
 <template>
-  <div class="main-page">
-    <div class="top-bar">
-      <img src="@/assets/logo.png" alt="Logo" class="logo" />
-      <button class="settings-btn">⚙️</button>
-    </div>
-
+  <main class="main-page">
     <div class="card">
       <img :src="currentUser.photo" alt="User" class="profile-photo" />
-
       <div class="user-info">
         <h2>{{ currentUser.name }}, {{ currentUser.age }}</h2>
         <p class="desc">"{{ currentUser.description }}"</p>
@@ -18,13 +12,7 @@
       <button class="dislike" @click="nextUser">❌</button>
       <button class="like" @click="nextUser">💚</button>
     </div>
-
-    <div class="bottom-nav">
-      <i class="bi bi-house"></i>
-      <i class="bi bi-person"></i>
-      <i class="bi bi-chat"></i>
-    </div>
-  </div>
+  </main>
 </template>
 
 <script>
@@ -69,37 +57,6 @@ export default {
 </script>
 
 <style scoped>
-.main-page {
-  width: 100vw;
-  height: 100vh;
-  background: #fdf2f6;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-family: 'Poppins', sans-serif;
-}
-
-/* 🔹 Górny pasek */
-.top-bar {
-  width: 100%;
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo {
-  width: 50px;
-  height: 50px;
-}
-
-.settings-btn {
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  cursor: pointer;
-}
-
 /* 🔹 Główna karta */
 .card {
   width: 320px;
@@ -173,18 +130,5 @@ export default {
 .like:hover {
   background: #6fcf97;
   color: white;
-}
-
-/* 🔹 Dolna nawigacja */
-.bottom-nav {
-  margin-top: auto;
-  padding: 1rem;
-  width: 100%;
-  display: flex;
-  justify-content: space-around;
-  border-top: 1px solid #ddd;
-  background: white;
-  font-size: 1.6rem;
-  color: #a94e74;
 }
 </style>
