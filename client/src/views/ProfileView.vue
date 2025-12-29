@@ -1,19 +1,16 @@
 <template>
-  <div class="profile-page">
-    <div v-if="store.user" class="profile-card">
-      <img class="profile-photo" :src="'http://localhost:3000' + store.user.images_paths[0]" alt="Profile" />
+  <div v-if="store.user" class="profile-card">
+    <img class="profile-photo" :src="'http://localhost:3000' + store.user.images_paths[0]" alt="Profile" />
+    <h1 class="profile-name">{{ store.user.name }}, {{ store.age }}</h1>
+    <p class="profile-desc">{{ store.user.bio }}</p>
 
-      <h1 class="profile-name">{{ store.user.name }}, {{ store.age }}</h1>
-      <p class="profile-desc">{{ store.user.bio }}</p>
-
-      <div class="buttons">
-        <button class="edit-btn" @click="$router.push('/profile/edit')">Edit profile</button>
-        <button class="logout-btn" @click="logout">Logout</button>
-      </div>
+    <div class="buttons">
+      <button class="edit-btn" @click="$router.push('/profile/edit')">Edit profile</button>
+      <button class="logout-btn" @click="logout">Logout</button>
     </div>
-    <div v-else class="profile-card">
-      <h1>Ładowanie...</h1>
-    </div>
+  </div>
+  <div v-else class="profile-card">
+    <h1>Ładowanie...</h1>
   </div>
 </template>
 
@@ -40,16 +37,6 @@ async function logout() {
 </script>
 
 <style scoped>
-.profile-page {
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(180deg, #f8d7e0 0%, #fff 100%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-family: 'Poppins', sans-serif;
-}
-
 /* Główna karta profilu */
 .profile-card {
   background: white;

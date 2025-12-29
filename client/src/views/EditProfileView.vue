@@ -176,17 +176,6 @@ function handleCancel() {
 </script>
 
 <style scoped>
-.edit-page {
-  width: 100vw;
-  min-height: 100vh; 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(180deg, #f8d7e0 0%, #fff 100%);
-  font-family: 'Poppins', sans-serif;
-  padding: 2rem 0; 
-}
-
 .form-box {
   background: white;
   padding: 3rem 4rem;
@@ -288,7 +277,6 @@ label {
   display: flex;
   justify-content: space-between;
   width: 100%;
-  margin-top: 1.5rem;
   gap: 1rem;
 }
 
