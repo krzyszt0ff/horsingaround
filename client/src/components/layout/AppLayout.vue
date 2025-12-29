@@ -39,8 +39,5 @@
             align-items: center;
             justify-items: center;
         }
-        .content{
-            width: 100%;
-        }
     }
 </style>

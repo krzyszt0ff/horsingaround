@@ -97,3 +97,47 @@ input:focus {
   color: #cf4e7d;
   text-decoration: none;
 }
+
+/* ======FONTY====== */
+
+/* Kreon */
+
+@font-face {
+  font-family: 'Kreon';
+  src: url('@/assets/fonts/kreon/Kreon-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Kreon';
+  src: url('@/assets/fonts/kreon/Kreon-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Kreon';
+  src: url('@/assets/fonts/kreon/Kreon-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Kreon';
+  src: url('@/assets/fonts/kreon/Kreon-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Kreon';
+  src: url('@/assets/fonts/kreon/Kreon-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

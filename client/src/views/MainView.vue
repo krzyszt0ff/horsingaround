@@ -9,8 +9,12 @@
     </div>
 
     <div class="buttons">
-      <button class="dislike" @click="nextUser">❌</button>
-      <button class="like" @click="nextUser">💚</button>
+      <button class="dislike" @click="nextUser">
+        <FontAwesomeIcon icon="x" class="icon"/>
+      </button>
+      <button class="like" @click="nextUser">
+        <FontAwesomeIcon icon="heart" class="icon"/>
+      </button>
     </div>
   </main>
 </template>
@@ -31,7 +35,7 @@ export default {
         {
           name: 'Zuzanna',
           age: 25,
-          photo: 'https://placekitten.com/300/300',
+          photo: 'https://i.scdn.co/image/ab67616100005174f9b40edf07217482e2a37029',
           description: 'Uwielbiam stajnię o poranku 🐴💨'
         },
         {
@@ -131,4 +135,35 @@ export default {
   background: #6fcf97;
   color: white;
 }
+
+  @media (width <= 650px) {
+    .card{
+      position: relative;
+      height: 60vh;
+      width: 80vw;
+      max-width: 400px;
+      max-height: 600px;
+      margin-bottom: 7rem;
+    }
+    .buttons{
+      z-index: 99;
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, 50%);
+      bottom: 9rem;
+      display: flex;
+      gap: 1rem;
+    }
+    .like, .dislike{
+      width: 80px;
+      height: 80px;
+    }
+  }
+
+  .like > .icon{
+    margin-top: 0.4rem;
+  }
+  .dislike > .icon{
+    margin-top: 0.3rem;
+  }
 </style>

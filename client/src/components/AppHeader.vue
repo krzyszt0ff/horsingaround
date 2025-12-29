@@ -1,14 +1,16 @@
 <template>
     <header class="top-bar">
       <img src="@/assets/logo.png" alt="Logo" class="logo" />
-      <button class="settings-btn">⚙️</button>
+      <button class="settings-btn">
+        <FontAwesomeIcon icon="sliders" class="icon" />
+      </button>
     </header>
 </template>
 
 <style scoped>
     .logo {
-    width: 50px;
-    height: 50px;
+    width: 4rem;
+    height: 4rem;
     }
 
     .top-bar {
@@ -26,6 +28,8 @@
     background: none;
     border: none;
     font-size: 1.8rem;
+    color: gray;
+    font-size: 2.5rem;
     cursor: pointer;
     }
 

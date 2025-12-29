@@ -13,6 +13,7 @@ import ProfileView from '../views/ProfileView.vue'
 import EditProfileView from '../views/EditProfileView.vue'
 import ChatContactsView from '@/views/ChatContactsView.vue'
 import ChatView from '@/views/ChatView.vue'
+import RankingView from '@/views/RankingView.vue';
 //
 
 export const publicRoutes = ["/login", "/signup/step1", "/signup/step2", "/signup/step3"];
@@ -31,6 +32,8 @@ const router = createRouter({
     { path: '/profile', name: 'profile', component: ProfileView, meta: {requiresAuth: true} },
     //
     { path: '/profile/edit', name: 'edit-profile', component: EditProfileView, meta: {requiresAuth: true} },
+
+    { path: '/ranking', name: 'ranking', component: RankingView, meta: {requiresAuth: true} },
 
     { path: '/chat', name: 'chat-contacts', component: ChatContactsView, meta: {requiresAuth: true}},
     //DO OSOBY ZAJMUJACEJ SIE IMPLEMENTACJA CHATU: TUTAJ PO SLASHU TRZEBA BY BYLO PEWNIE DODAC JAKOS
