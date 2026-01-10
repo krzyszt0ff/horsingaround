@@ -11,9 +11,9 @@ import LoginView from '../views/LoginView.vue'
 import ProfileView from '../views/ProfileView.vue'
 //
 import EditProfileView from '../views/EditProfileView.vue'
-import ChatContactsView from '@/views/ChatContactsView.vue'
-import ChatView from '@/views/ChatView.vue'
 import RankingView from '@/views/RankingView.vue';
+//
+import ChatView from '@/views/ChatView.vue'
 //
 
 export const publicRoutes = ["/login", "/signup/step1", "/signup/step2", "/signup/step3"];
@@ -35,10 +35,12 @@ const router = createRouter({
 
     { path: '/ranking', name: 'ranking', component: RankingView, meta: {requiresAuth: true} },
 
-    { path: '/chat', name: 'chat-contacts', component: ChatContactsView, meta: {requiresAuth: true}},
+    { path: '/chat', name: 'chat-contacts', component: ChatView, meta: {requiresAuth: true} },
     //DO OSOBY ZAJMUJACEJ SIE IMPLEMENTACJA CHATU: TUTAJ PO SLASHU TRZEBA BY BYLO PEWNIE DODAC JAKOS
     //ID UZYTKOWNIKA PEWNIE ALBO JAKIS HASH NWM NWM JAK NARAZIE ZOSTAWIAM TO TAK PUSTO
-    { path: '/chat/dupa', name: 'chat', component: ChatView, meta: {requiresAuth: true}},
+    // Generalnie /chat/:chatId nie bedzie potrzebne, ale ty jestes szefem i ty decydujesz o sprawach przod-koniec
+    // OK!
+    { path: '/chat/:chatId', name: 'chat', component: ChatView, meta: {requiresAuth: true}},
 
     // opcjonalnie: fallback
     { path: '/:pathMatch(.*)*', redirect: '/' }
