@@ -1,13 +1,7 @@
 <template>
-  <div class="main-page">
-    <div class="top-bar">
-      <img src="@/assets/logo.png" alt="Logo" class="logo" />
-      <button class="settings-btn">⚙️</button>
-    </div>
-
+  <main class="main-page">
     <div class="card">
       <img :src="currentUser.photo" alt="User" class="profile-photo" />
-
       <div class="user-info">
         <h2>{{ currentUser.name }}, {{ currentUser.age }}</h2>
         <p class="desc">"{{ currentUser.description }}"</p>
@@ -15,16 +9,14 @@
     </div>
 
     <div class="buttons">
-      <button class="dislike" @click="nextUser">❌</button>
-      <button class="like" @click="nextUser">💚</button>
+      <button class="dislike" @click="nextUser">
+        <FontAwesomeIcon icon="x" class="icon"/>
+      </button>
+      <button class="like" @click="nextUser">
+        <FontAwesomeIcon icon="heart" class="icon"/>
+      </button>
     </div>
-
-    <div class="bottom-nav">
-      <i class="bi bi-house"></i>
-      <i class="bi bi-person"></i>
-      <i class="bi bi-chat"></i>
-    </div>
-  </div>
+  </main>
 </template>
 
 <script>
@@ -43,7 +35,7 @@ export default {
         {
           name: 'Zuzanna',
           age: 25,
-          photo: 'https://placekitten.com/300/300',
+          photo: 'https://i.scdn.co/image/ab67616100005174f9b40edf07217482e2a37029',
           description: 'Uwielbiam stajnię o poranku 🐴💨'
         },
         {
@@ -69,37 +61,6 @@ export default {
 </script>
 
 <style scoped>
-.main-page {
-  width: 100vw;
-  height: 100vh;
-  background: #fdf2f6;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-family: 'Poppins', sans-serif;
-}
-
-/* 🔹 Górny pasek */
-.top-bar {
-  width: 100%;
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo {
-  width: 50px;
-  height: 50px;
-}
-
-.settings-btn {
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  cursor: pointer;
-}
-
 /* 🔹 Główna karta */
 .card {
   width: 320px;
@@ -175,16 +136,34 @@ export default {
   color: white;
 }
 
-/* 🔹 Dolna nawigacja */
-.bottom-nav {
-  margin-top: auto;
-  padding: 1rem;
-  width: 100%;
-  display: flex;
-  justify-content: space-around;
-  border-top: 1px solid #ddd;
-  background: white;
-  font-size: 1.6rem;
-  color: #a94e74;
-}
+  @media (width <= 650px) {
+    .card{
+      position: relative;
+      height: 60vh;
+      width: 80vw;
+      max-width: 400px;
+      max-height: 600px;
+      margin-bottom: 7rem;
+    }
+    .buttons{
+      z-index: 99;
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, 50%);
+      bottom: 9rem;
+      display: flex;
+      gap: 1rem;
+    }
+    .like, .dislike{
+      width: 80px;
+      height: 80px;
+    }
+  }
+
+  .like > .icon{
+    margin-top: 0.4rem;
+  }
+  .dislike > .icon{
+    margin-top: 0.3rem;
+  }
 </style>

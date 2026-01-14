@@ -68,8 +68,21 @@
       <p v-if="errors.age_min || errors.age_max" class="error-text">
         {{ errors.age_min || errors.age_max }}
       </p>
-
+      <label>Bio</label>
+      <textarea
+        class="bio-textarea"
+        v-model="bio"
+        placeholder="Tell us something about yourself..."
+        rows="3"
+      ></textarea>
+      <div class="bio-footer">
+        <p v-if="errors.bio" class="error-text">{{ errors.bio }}</p>
+        <span class="char-count" :class="{ 'limit-reached': bio.length > 500 }">
+          {{ bio.length }}/500
+        </span>
+      </div>
       <button class="next-btn" @click="handleNext">Next</button>
+
 
       <p class="back">
         <a @click.prevent="$router.push('/signup/step1')" href="#">← Back</a>
@@ -94,6 +107,7 @@ const preferredGenders = ref([]);
 const dateOfBirth = ref('');
 const age_min = ref('');
 const age_max = ref('');
+const bio = ref(''); //dodawanie bio, bo ciągle było na sztywno
 
 // błędy walidacji
 const errors = ref({
@@ -103,6 +117,7 @@ const errors = ref({
   dateOfBirth: '',
   age_min: '',
   age_max: '',
+  bio: '',
 });
 
 // schemat walidacji
@@ -158,6 +173,7 @@ async function handleNext() {
     dateOfBirth: '',
     age_min: '',
     age_max: '',
+    bio: '',
   };
 
   const result = registrationSchema.safeParse({
@@ -167,6 +183,7 @@ async function handleNext() {
     dateOfBirth: dateOfBirth.value,
     age_min: age_min.value,
     age_max: age_max.value,
+    bio: bio.value,
   });
 
   if (!result.success) {
@@ -185,6 +202,7 @@ async function handleNext() {
     gender: gender.value,
     preferred_gender: preferredGenders.value,
     age_preference: [age_min.value, age_max.value],
+    bio: bio.value,
   });
 
   router.push('/signup/step3');

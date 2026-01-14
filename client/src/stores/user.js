@@ -4,7 +4,24 @@ export const useUserStore = defineStore("user", {
   state: () => ({
     user: null
   }),
+  //teraz getter przechowuje age ze state, bo to wartość wyliczana, a nie przechowywana
+  getters: {
+    age: (state) => {
+      // Jeśli nie ma usera lub daty, nie ma wieku
+      if (!state.user || !state.user.date_of_birth) return null;
+      // Pobieramy daty
+      const birthDate = new Date(state.user.date_of_birth);
+      const today = new Date();
+      // Obliczamy różnicę lat
+      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        calculatedAge--;
+      }
 
+      return calculatedAge;
+    }
+  },
   actions: {
     async loadUser() {
       try {
@@ -23,7 +40,7 @@ export const useUserStore = defineStore("user", {
 
         const data = await res.json();
         this.user = data.data.user;
-        this.age = data.data.age;
+        //teraz age zajmuje się getter wyżej
 
       } catch (err) {
         console.error("loadUser() error:", err);

@@ -106,7 +106,7 @@ async function signIn() {
 
     if (response.ok && data.success) {
       await store.loadUser();
-      router.push('/profile');
+      router.push('/');
       return;
     }
 
