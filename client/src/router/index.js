@@ -30,7 +30,7 @@ const router = createRouter({
     { path: '/signup/step2', name: 'signup-step2', component: SignupStep2 },
     { path: '/signup/step3', name: 'signup-step3', component: SignupStep3 },
     { path: '/profile', name: 'profile', component: ProfileView, meta: {requiresAuth: true} },
-    //
+
     { path: '/profile/edit', name: 'edit-profile', component: EditProfileView, meta: {requiresAuth: true} },
 
     { path: '/ranking', name: 'ranking', component: RankingView, meta: {requiresAuth: true} },

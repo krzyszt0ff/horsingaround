@@ -27,12 +27,16 @@ onMounted(async () => {
 });
 
 async function logout() {
-  store.logout();
-  await fetch("http://localhost:3000/api/auth/logout", {
-  method: "POST",
-  credentials: "include"
-  });
-  router.push('/')
+  try{
+      await fetch("http://localhost:3000/api/auth/logout", {
+        method: "POST",
+        credentials: "include"
+      });
+    store.logout();
+    router.push('/')
+  } catch (err){
+    console.error('Logout failed', err)
+  }
 }
 </script>
 

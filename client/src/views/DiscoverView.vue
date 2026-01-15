@@ -1,5 +1,6 @@
+<!--TEN WIDOK ZOSTAL PRZERZUCONY DO MAINVIEW ALE NIE USUWAM GO NA WSZELKI WYPADEK-->
 <template>
-  <main class="main-page">
+  <div class="discover-page">
     <div v-if="loading" class="loading">Ładowanie...</div>
 
     <div v-else-if="users.length === 0" class="no-users">
@@ -9,24 +10,18 @@
     
     <div
       v-else
-      class="card"
+      class="swipe-card"
       v-for="(user, index) in users"
       :key="user._id"
       v-show="currentIndex === index && !endOfUsers"
     >
       <img class="profile-photo" :src="'http://localhost:3000' + user.images_paths[0]" alt="Profile" />
-      <div class="user-info">
-        <h2>{{ user.name }}, {{ user.age }}</h2>
-        <p class="desc">"{{ user.description }}"</p>
-      </div>
+      <h1 class="profile-name">{{ user.name }}, {{ user.age }}</h1>
+      <p class="profile-desc">Miłośniczka koni i długich przejażdżek 🌅</p>
 
       <div class="buttons">
-        <button class="dislike" @click="dislike">
-          <FontAwesomeIcon icon="x" class="icon"/>
-        </button>
-        <button class="like" @click="like">
-          <FontAwesomeIcon icon="heart" class="icon"/>
-        </button>
+        <button @click="dislike">❌</button>
+        <button @click="like">❤️</button>
       </div>
     </div>
 
@@ -34,8 +29,9 @@
     <div v-if="endOfUsers" class="no-users">
        To już wszyscy użytkownicy w Twojej okolicy, galopuj dalej
     </div>
-  </main>
+  </div>
 </template>
+
 
 <script setup>
 import { ref, onMounted } from 'vue';
@@ -106,123 +102,79 @@ function dislike() {
 </script>
 
 <style scoped>
-/* 🔹 Główna karta */
-.card {
-  width: 320px;
-  height: 460px;
+.discover-page {
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(180deg, #f8d7e0 0%, #fff 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Poppins', sans-serif;
+}
+
+.loading, .no-users {
+  font-size: 1.5rem;
+  color: #555;
+}
+
+.swipe-card {
   background: white;
-  border-radius: 20px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
+  width: 380px;
+  padding: 3rem 2rem;
+  border-radius: 24px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .profile-photo {
-  width: 100%;
-  height: 70%;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
   object-fit: cover;
+  margin-bottom: 1.5rem;
+  border: 4px solid #e67da8;
 }
 
-.user-info {
-  padding: 1rem;
-  text-align: center;
-}
-
-.user-info h2 {
+.profile-name {
+  font-size: 1.8rem;
+  font-weight: 600;
   color: #a94e74;
-  font-size: 1.4rem;
   margin-bottom: 0.5rem;
 }
 
-.user-info .desc {
+.profile-desc {
+  font-size: 1rem;
   color: #555;
-  font-size: 0.9rem;
+  margin-bottom: 2rem;
+  line-height: 1.4;
 }
 
-/* 🔹 Przyciski */
 .buttons {
   display: flex;
-  justify-content: center;
-  gap: 2rem;
-  margin: 1.5rem 0;
+  gap: 1rem;
 }
 
-.dislike,
-.like {
-  width: 60px;
-  height: 60px;
+.buttons button {
+  font-size: 1.5rem;
+  padding: 0.5rem 1rem;
   border-radius: 50%;
-  font-size: 1.8rem;
-  border: 3px solid;
-  background: white;
+  border: none;
   cursor: pointer;
-  transition: 0.3s;
+  transition: 0.2s;
 }
 
-.dislike {
-  border-color: #ff7b7b;
-  color: #ff7b7b;
+.buttons button:hover {
+  transform: scale(1.1);
 }
-
-.like {
-  border-color: #6fcf97;
-  color: #6fcf97;
-}
-
-.dislike:hover {
-  background: #ff7b7b;
-  color: white;
-}
-
-.like:hover {
-  background: #6fcf97;
-  color: white;
-}
-
-  @media (width <= 650px) {
-    .card{
-      position: relative;
-      height: 60vh;
-      width: 80vw;
-      max-width: 400px;
-      max-height: 600px;
-      margin-bottom: 7rem;
-    }
-    .buttons{
-      z-index: 99;
-      position: absolute;
-      left: 50%;
-      transform: translate(-50%, 50%);
-      bottom: 9rem;
-      display: flex;
-      gap: 1rem;
-    }
-    .like, .dislike{
-      width: 80px;
-      height: 80px;
-    }
-  }
-
-  .like > .icon{
-    margin-top: 0.4rem;
-  }
-  .dislike > .icon{
-    margin-top: 0.3rem;
-  }
-
-  .loading, .no-users {
+.no-users {
   font-size: 1.5rem;
   color: #555;
-  }
-
-  .no-users {
-  font-size: 1.5rem;
-  color: var(--pink3);
   text-align: center;
   padding: 2rem;
-  background: var(--Lpink);
+  background: #ffe6f0; /* delikatny różowy */
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   max-width: 350px;
@@ -232,6 +184,7 @@ function dislike() {
 
 .no-users:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
 }
+
 </style>
