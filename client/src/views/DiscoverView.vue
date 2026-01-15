@@ -1,3 +1,4 @@
+<!--TEN WIDOK ZOSTAL PRZERZUCONY DO MAINVIEW ALE NIE USUWAM GO NA WSZELKI WYPADEK-->
 <template>
   <div class="discover-page">
     <div v-if="loading" class="loading">Ładowanie...</div>

@@ -1,62 +1,107 @@
 <template>
   <main class="main-page">
-    <div class="card">
-      <img :src="currentUser.photo" alt="User" class="profile-photo" />
+    <div v-if="loading" class="loading">Ładowanie...</div>
+
+    <div v-else-if="users.length === 0" class="no-users">
+      Brak nowych użytkowników do pokazania 
+    </div>
+
+    
+    <div
+      v-else
+      class="card"
+      v-for="(user, index) in users"
+      :key="user._id"
+      v-show="currentIndex === index && !endOfUsers"
+    >
+      <img class="profile-photo" :src="'http://localhost:3000' + user.images_paths[0]" alt="Profile" />
       <div class="user-info">
-        <h2>{{ currentUser.name }}, {{ currentUser.age }}</h2>
-        <p class="desc">"{{ currentUser.description }}"</p>
+        <h2>{{ user.name }}, {{ user.age }}</h2>
+        <p class="desc">"{{ user.description }}"</p>
+      </div>
+
+      <div class="buttons">
+        <button class="dislike" @click="dislike">
+          <FontAwesomeIcon icon="x" class="icon"/>
+        </button>
+        <button class="like" @click="like">
+          <FontAwesomeIcon icon="heart" class="icon"/>
+        </button>
       </div>
     </div>
 
-    <div class="buttons">
-      <button class="dislike" @click="nextUser">
-        <FontAwesomeIcon icon="x" class="icon"/>
-      </button>
-      <button class="like" @click="nextUser">
-        <FontAwesomeIcon icon="heart" class="icon"/>
-      </button>
+    <!-- Komunikat "koniec użytkowników" -->
+    <div v-if="endOfUsers" class="no-users">
+       To już wszyscy użytkownicy w Twojej okolicy, galopuj dalej
     </div>
   </main>
 </template>
 
-<script>
-export default {
-  name: 'MainView',
-  data() {
-    return {
-      currentIndex: 0,
-      users: [
-        {
-          name: 'Agnieszka',
-          age: 23,
-          photo: '@/assets/default-profile.jpg',
-          description: 'Nie porównuj ludzi do koni. Ludzie będą łamać ci serce non stop, a koń zrobi to tylko raz...'
-        },
-        {
-          name: 'Zuzanna',
-          age: 25,
-          photo: 'https://i.scdn.co/image/ab67616100005174f9b40edf07217482e2a37029',
-          description: 'Uwielbiam stajnię o poranku 🐴💨'
-        },
-        {
-          name: 'Klaudia',
-          age: 21,
-          photo: 'https://placekitten.com/301/301',
-          description: 'Jeżdżę od dziecka. Szukam kogoś, kto zrozumie zapach siodła 😄'
-        }
-      ]
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useUserStore } from '@/stores/user';
+
+const store = useUserStore();
+const users = ref([]);
+const loading = ref(true);
+const currentIndex = ref(0);
+const endOfUsers = ref(false);
+
+
+onMounted(async () => {
+  try {
+   
+    const res = await fetch('http://localhost:3000/api/users?page=1', {
+      method: 'GET',
+      credentials: 'include'
+    });
+
+    const data = await res.json();
+    console.log('Odpowiedź z backendu:', data);
+
+    if (data.success) {
+      
+      users.value = data.data.filter(u => u.user_id !== store.user.userId);
     }
-  },
-  computed: {
-    currentUser() {
-      return this.users[this.currentIndex]
-    }
-  },
-  methods: {
-    nextUser() {
-      this.currentIndex = (this.currentIndex + 1) % this.users.length
-    }
+  } catch (err) {
+    console.error('Błąd pobierania użytkowników:', err);
+  } finally {
+    loading.value = false;
   }
+});
+
+
+function nextCard() {
+  if (currentIndex.value < users.value.length - 1) {
+    currentIndex.value++;
+  } else {
+    endOfUsers.value=true;
+  }
+}
+
+async function like() {
+  const user = users.value[currentIndex.value];
+
+  const res = await fetch(
+    `http://localhost:3000/api/users/${user.user_id}/like`,
+    {
+      method: 'POST',
+      credentials: 'include'
+    }
+  );
+
+  const data = await res.json();
+
+  if (data.match_created) {
+    alert('🔥 MATCH!');
+  }
+
+  nextCard();
+}
+
+
+function dislike() {
+  nextCard();
 }
 </script>
 
@@ -166,4 +211,27 @@ export default {
   .dislike > .icon{
     margin-top: 0.3rem;
   }
+
+  .loading, .no-users {
+  font-size: 1.5rem;
+  color: #555;
+  }
+
+  .no-users {
+  font-size: 1.5rem;
+  color: var(--pink3);
+  text-align: center;
+  padding: 2rem;
+  background: var(--Lpink);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  max-width: 350px;
+  margin: 0 auto;
+  transition: all 0.3s ease;
+}
+
+.no-users:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
 </style>
