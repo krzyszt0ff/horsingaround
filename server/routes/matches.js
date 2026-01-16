@@ -1,6 +1,6 @@
 import express from 'express';
 import { listMatches, deleteMatch, listMessages, listChats } from '../controllers/matchesController.js';
-import { rankLikes, rankMatches } from '../controllers/rankingController.js';
+import { statLikes, statMatches } from '../controllers/rankingController.js';
 
 const router = express.Router();
 
@@ -13,7 +13,7 @@ router.get('/:matchid/messages', listMessages);     //zwraca kod statusu, wiadom
 router.get('/chats', listChats);                    //zwraca kod statusu, matche przypisane do użytkowika, ostatnią wiadomość
 
 // RANKING
-router.get('/rank/likes/:gender', rankLikes);       //zwraca kod statusu, listę użytkowników z największą ilością polubień i ilość polubień
-router.get('/rank/matches/:gender', rankMatches);   //zwraca kod statusu, listę użytkowników z największą ilością matchy i ich ilość
+router.get('/rank/likes/:gender', statLikes);       //zwraca kod statusu, listę użytkowników z największą ilością polubień i ilość polubień
+router.get('/rank/matches/:gender', statMatches);   //zwraca kod statusu, listę użytkowników z największą ilością matchy i ich ilość
 
 export default router;

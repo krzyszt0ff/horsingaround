@@ -3,11 +3,15 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <h2>Wiadomości</h2>
+        <input
+          v-model="searchQuery"
+          placeholder="Szukaj matchy.."
+          class="search-input" />
       </div>
 
       <div class="chat-list">
         <div 
-          v-for="chat in chatStore.sortedChats" 
+          v-for="chat in searchOutput" 
           :key="chat.match_id"
           class="chat-item"
           :class="{ active: chatStore.activeChat?.match_id === chat.match_id }"
@@ -47,7 +51,7 @@
 
 <script setup>
 
-  import { onMounted } from 'vue';
+  import { ref, computed, onMounted } from 'vue';
   import { useChatStore, API_URL } from '@/stores/chatStore';
   import ChatWindow from '@/components/chat/ChatWindow.vue';
   import { useUserStore } from '@/stores/user'; 
@@ -55,6 +59,8 @@
   const chatStore = useChatStore();
   const userStore = useUserStore();
   const userID = userStore.user.user_id;
+
+  const searchQuery = ref('');
 
   onMounted(async () => {
     await chatStore.fetchChats(); // Pobranie chatów
@@ -75,6 +81,20 @@
     const date = new Date(dateStr);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
+
+  const searchOutput = computed(() => {
+    const matches = chatStore.sortedChats || [];
+    if (!searchQuery.value) return matches;
+
+    const input = searchQuery.value.toLowerCase();
+    return matches.filter(chat => {
+      const name = chat.other_user.name?.toLowerCase() || '';
+      const surname = chat.other_user.surnme?.toLowerCase() || '';
+      
+      return name.includes(input) || surname.includes(input);
+      
+    });
+  });
 
 </script>
 
@@ -189,5 +209,18 @@
     align-items: center;
     color: #ccc;
     font-size: 1.2rem;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 8px 12px;
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    outline: none;
+  }
+
+  .search-input:focus {
+    border-color: #007bff;
   }
 </style>
