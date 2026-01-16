@@ -4,7 +4,7 @@ import { Like } from "../models/Like.js";
 import { UserData } from "../models/UserData.js";
 import mongoose from 'mongoose';
 
-export async function rankLikes(req,res){
+export async function statLikes(req,res){
     try {
         const gender = req.params.gender;
 
@@ -24,7 +24,7 @@ export async function rankLikes(req,res){
                 }
             },
             { $unwind: "$user_info" },                  // Rozbicie tablicy user_info na obiekt
-            { $match: { "user_info.gender": gender } }, // Filtrowanie po płci
+            ...(gender !== 'all' ? [{ $match: { "user_info.gender": gender } }] : []), // Filtrowanie po płci, gdy nie są to statystyki łączone
             { $sort: { likesCounter: -1 } },            // Sortowanie malejąco
             { $limit: 100 },                            // Ograniczenie, tylko 100 wyników
             {
@@ -50,7 +50,7 @@ export async function rankLikes(req,res){
     }
 };
 
-export async function rankMatches(req,res){
+export async function statMatches(req,res){
     try {
         const gender = req.params.gender;
 
@@ -70,7 +70,7 @@ export async function rankMatches(req,res){
                 }
             },
             { $unwind: "$user_info" },                  // Rozbicie tablicy user_info na obiekt
-            { $match: { "user_info.gender": gender } }, // Filtrowanie po płci
+            ...(gender !== 'all' ? [{ $match: { "user_info.gender": gender } }] : []), // Filtrowanie po płci
             { $sort: { matchesCounter: -1 } },          // Sortowanie malejąco
             { $limit: 100 },                            // Ograniczenie, tylko 100 wyników
             {
