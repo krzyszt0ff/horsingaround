@@ -2,6 +2,8 @@ import express from 'express';
 import path from 'path';
 import crypto from 'crypto';
 import multer from 'multer';
+import { authMiddleware } from "../middleware/authMiddleware.js";
+import { UserData } from '../models/UserData.js';
 import { listUsers, addUser, updateUser, showUser, showMyProfile, reportUser, likeUser } from '../controllers/usersController.js'
 
 const router = express.Router();
@@ -38,7 +40,7 @@ const upload = multer({storage, fileFilter});
 router.get('/', listUsers); 
 
 //zwraca profil aktualnie zalogowanego użytkownika, kod statusu
-router.get('/me', showMyProfile); 
+router.get('/me', authMiddleware, showMyProfile); 
 
 //zwraca profil użytkownika o podanym id, kod statusu
 //INPUT: w url id użytkownika, którego chcemy wyświetlić
@@ -46,8 +48,6 @@ router.get('/me', showMyProfile);
 //z bazy, age to obliczony wiek a distance to dystans zaokrąglony do 0,1 km
 //LUB {success: false, error:}
 router.get('/:id', showUser);
-
-
 
 //zwraca utworzony profil użytkownika, kod statusu
 //INPUT: UWAGA! MUSI BYĆ W multipart/form-data, NIE JSON!; Potrzebne pola:
@@ -65,6 +65,67 @@ router.get('/:id', showUser);
 //  * zdjęcia wrzucamy do pola photos, też kilka razy jeśli jest kilka zdjęć
 //OUTPUT: success, data (obiekt z danymi utworzonego profilu)
 router.post('/', upload.array('photos'), addUser);
+
+//zwraca zaktualizowany profil użytkownika (tylko dane tekstowe), kod statusu
+//INPUT: format multipart/form-data (używamy FormData na froncie), ale BEZ PLIKÓW!
+//  * name
+//  * bio
+//  * gender
+//  * date_of_birth
+//  * preferred_min_age
+//  * preferred_max_age
+//  * preferred_distance -- TO NARAZIE WYJEBAŁAM BO MI PSUJE TYLKO I NIE WIEM DLACZEGO BEDZIE TRZEBA TO SPRAWDZIĆ I POPRAWIĆ <3
+//  * preferred_gender: jako lista, czyli robicie append do tego pola kilka razy, tyle ile jest wybranych płci
+//  * WAŻNE: ID użytkownika jest pobierane automatycznie z tokena (musi być zalogowany), nie podajemy go w URL
+//OUTPUT: {success: true, data: (obiekt z danymi zaktualizowanego profilu)}
+router.put('/update-profile', authMiddleware, upload.none(), async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    if (!userId) {
+      throw new Error("Brak User ID w tokenie");
+    }
+    let { 
+      name, 
+      bio, 
+      gender, 
+      date_of_birth,
+      preferred_min_age, 
+      preferred_max_age,
+      preferred_gender 
+    } = req.body;
+    let genderArray = [];
+    if (preferred_gender) {
+      if (Array.isArray(preferred_gender)) {
+         genderArray = preferred_gender;
+      } else {
+         genderArray = [preferred_gender];
+      }
+    }
+    const updateData = {
+      name,
+      bio,
+      gender,
+      date_of_birth,
+      preferred_min_age: Number(preferred_min_age), 
+      preferred_max_age: Number(preferred_max_age), 
+      preferred_gender: genderArray
+    };
+    const updatedUser = await UserData.findOneAndUpdate(
+      { user_id: userId },
+      updateData,
+      { new: true, runValidators: true }
+    );
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "Profil nie znaleziony" });
+    }
+    res.status(200).json({ success: true, data: updatedUser });
+
+  } catch (error) {
+    console.error("!!! BŁĄD KRYTYCZNY W ROUTERZE !!!");
+    console.error(error); 
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 //zwraca zaktualizowany profil użytkownika, kod statusu
 //INPUT

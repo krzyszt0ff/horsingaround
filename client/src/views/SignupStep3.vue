@@ -4,7 +4,6 @@
       <h1>Upload your photos</h1>
       <p class="desc">Add at least one photo to complete your profile</p>
 
-      <!--TODO: FIX THE PHOTO GRID-->
       <div class="photo-grid">
         <div
           v-for="(photo, index) in photos"
@@ -12,10 +11,22 @@
           class="photo-slot"
           @click="uploadPhoto(index)"
         >
-          <img v-if="photoPreviews[index]" :src="photoPreviews[index]" alt="Uploaded"/>
+          <img
+            v-if="photoPreviews[index]"
+            :src="photoPreviews[index]"
+            alt="Uploaded"
+          />
           <span v-else>+</span>
         </div>
       </div>
+
+      <!-- błąd walidacji zdjęć -->
+      <p v-if="photoError" class="error-text">{{ photoError }}</p>
+
+      <!-- ogólny błąd backendu / rejestracji -->
+      <p v-if="errorMessage" class="error-text backend-error">
+        {{ errorMessage }}
+      </p>
 
       <button class="finish-btn" @click="handleFinish">Finish</button>
 
@@ -41,50 +52,66 @@ import { useRouter } from 'vue-router';
 import { useRegistrationStore } from '@/stores/registration';
 
 //=============
-//OBSŁUGA ZDJĘĆ
+// OBSŁUGA ZDJĘĆ
 //=============
 
-const photos = ref([null, null, null])
-const photoPreviews = ref([null, null, null])
-const activeIndex = ref(0)
-const fileInput = ref(null)
+const photos = ref([null, null, null]);
+const photoPreviews = ref([null, null, null]);
+const activeIndex = ref(0);
+const fileInput = ref(null);
+
+const photoError = ref('');
+const errorMessage = ref(''); // błąd ogólny (backend / rejestracja)
 
 function uploadPhoto(index) {
-  activeIndex.value = index
-  fileInput.value.click()
+  activeIndex.value = index;
+  fileInput.value?.click();
 }
 
 function handleFileChange(event) {
-  const file = event.target.files[0]
-  if (!file) return
+  const file = event.target.files[0];
+  if (!file) return;
 
-  photos.value[activeIndex.value] = file
-
-  photoPreviews.value[activeIndex.value] = URL.createObjectURL(file)
+  photos.value[activeIndex.value] = file;
+  photoPreviews.value[activeIndex.value] = URL.createObjectURL(file);
+  photoError.value = ''; // wyczyść błąd, jeśli było coś wrzucone
 }
 
 //===================
-//OBSŁUGA REJESTRACJI
+// OBSŁUGA REJESTRACJI
 //===================
 
-const store = useRegistrationStore()
-const router = useRouter()
-let storeAll = ref('')
+const store = useRegistrationStore();
+const router = useRouter();
+let storeAll = ref('');
 
 async function handleFinish() {
+  photoError.value = '';
+  errorMessage.value = '';
+
+  // walidacja: minimum jedno zdjęcie
+  const hasAtLeastOnePhoto = photos.value.some((p) => p !== null);
+  if (!hasAtLeastOnePhoto) {
+    photoError.value = 'Please upload at least one photo.';
+    return;
+  }
+
+  // zapisujemy zdjęcia do store
   store.updateStep('step3', {
-      photos: photos.value
-  })
+    photos: photos.value,
+  });
 
-  let credentialData;
-  storeAll = store.allData
+  storeAll = store.allData;
   const default_distance = 60;
+  let credentialData;
 
-  try{
-    const response = await fetch("http://localhost:3000/api/auth/register", {
-      method: "POST",
+  try {
+    // 1. rejestracja credentials (email + password)
+    const response = await fetch('http://localhost:3000/api/auth/register', {
+      method: 'POST',
+      credentials: 'include',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         email: storeAll.email,
@@ -92,54 +119,74 @@ async function handleFinish() {
       }),
     });
 
-    credentialData = await response.json();
-    console.log(credentialData);
+    const text = await response.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      data = {};
+    }
+    credentialData = data;
+
+    if (!response.ok || !credentialData.userId) {
+      // np. email już istnieje
+      errorMessage.value =
+        credentialData?.error ||
+        'Registration failed. This email may already be in use.';
+      console.log('REGISTER ERROR:', text);
+      return;
+    }
+
+    // 2. tworzenie profilu użytkownika
+    const userData = new FormData();
+    userData.append('user_id', credentialData.userId);
+    userData.append('name', storeAll.name);
+    userData.append('date_of_birth', storeAll.dateOfBirth);
+    userData.append('gender', storeAll.gender);
+
+    storeAll.preferred_gender.forEach((gender) => {
+      userData.append('preferred_gender', gender);
+    });
+
+    // po zmianach w step2 mamy zwykłe wartości, nie .value
+    userData.append(
+      'preferred_min_age',
+      Number(storeAll.age_preference[0])
+    );
+    userData.append(
+      'preferred_max_age',
+      Number(storeAll.age_preference[1])
+    );
+    userData.append('preferred_distance', default_distance);
+
+    storeAll.photos.forEach((photo) => {
+      if (photo) userData.append('photos', photo);
+    });
+
+    userData.append('longitude', 0);
+    userData.append('latitude', 0);
+    userData.append('bio', storeAll.bio);
+    const userResponse = await fetch('http://localhost:3000/api/users/', {
+      method: 'POST',
+      credentials: 'include',
+      body: userData,
+    });
+
+    if (!userResponse.ok) {
+      const text = await userResponse.text();
+      console.log('BACKEND ERROR:', text);
+      errorMessage.value =
+        'Could not create your profile. Please try again.';
+      return;
+    }
+
+    const createdUser = await userResponse.json();
+    console.log('USER CREATED:', createdUser);
+    router.push('/profile');
   } catch (error) {
     console.log(error);
+    errorMessage.value = 'Unexpected error. Please try again later.';
   }
-
-  
-  if(credentialData.success){
-    try{
-      const userData = new FormData();
-      userData.append("name", storeAll.name);
-      userData.append("date_of_birth", storeAll.dateOfBirth);
-      userData.append("gender", storeAll.gender);
-      storeAll.preferred_gender.forEach(gender => {
-        userData.append("preferred_gender", gender);
-      });
-      userData.append("preferred_min_age", Number(storeAll.age_preference[0].value));
-      userData.append("preferred_max_age", Number(storeAll.age_preference[1].value));
-      userData.append("preferred_distance", default_distance);
-      storeAll.photos.forEach(photo => {
-        if (photo) userData.append("photos", photo);
-      });
-      userData.append("longitude", 0);
-      userData.append("latitude", 0);
-
-      const response = await fetch("http://localhost:3000/api/users/", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${credentialData.token}`,
-        },
-        body: userData,
-        
-      });
-      if (!response.ok) {
-        const text = await response.text();
-        console.log("BACKEND ERROR:", text);
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log(data);
-      router.push('/profile')
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  console.log(storeAll)
 }
 </script>
 
@@ -180,7 +227,7 @@ h1 {
   display: flex;
   justify-content: center;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .photo-slot {
@@ -224,6 +271,20 @@ h1 {
   font-weight: 500;
   cursor: pointer;
   transition: 0.3s;
+  margin-top: 0.5rem;
+}
+
+/* jednolity styl błędów */
+.error-text {
+  width: 100%;
+  margin: 0.4rem 0;
+  font-size: 0.8rem;
+  color: #cf4e7d;
+  text-align: center;
+}
+
+.backend-error {
+  margin-top: 0.2rem;
 }
 
 .finish-btn:hover {

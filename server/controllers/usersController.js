@@ -60,7 +60,10 @@ export async function listUsers(req, res) {
   const minDate = new Date(today.getFullYear() - preferred_max_age, today.getMonth(), today.getDate());
 
   const preferred_distance_m = preferred_distance * 1000;
-
+//  maxDistance: preferred_distance_m, zmieniam na chwile
+/*gender: { $in: preferred_gender },
+            preferred_gender: gender,
+            date_of_birth: { $gte: minDate, $lte: maxDate }*/
   try {
     page = parseInt(page, 10) || 1;
 
@@ -75,6 +78,7 @@ export async function listUsers(req, res) {
             gender: { $in: preferred_gender },
             preferred_gender: gender,
             date_of_birth: { $gte: minDate, $lte: maxDate }
+            
           },
           spherical: true
         }
@@ -198,7 +202,7 @@ export async function addUser(req, res) {
 
   console.log(req.files);
   console.log(req.body);
-  const id = req.user.userId;
+  const id = req.body.user_id;
 
   const result = profileSchema.safeParse(req.body);
 
@@ -497,6 +501,4 @@ export function deleteUser(req, res) {
 
   users.splice(idx,1);
   res.status(204).send();
-}*/
-
 }*/

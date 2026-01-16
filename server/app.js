@@ -1,7 +1,12 @@
+import cookieParser from "cookie-parser";
 import express from 'express';
 import morgan from 'morgan';
 import path from 'path';
 import cors from 'cors';
+
+import { createServer } from 'node:http';
+import { Server } from "socket.io";
+
 import './db.js';
 import usersRouter from './routes/users.js';
 import authRouter from './routes/auth.js';
@@ -9,17 +14,29 @@ import adminRouter from './routes/admin.js';
 import matchesRouter from './routes/matches.js';
 import { authMiddleware } from './middleware/authMiddleware.js';
 
+import setupSocket from "./socket/socket.js";
+
 const PORT = 3000;
 
-
-
 var app = express();
+const server = createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    credentials: true
+  }
+});
+
+setupSocket(io);
 
 app.use(cors({
-  origin: "http://localhost:5173"
+  origin: "http://localhost:5173",
+  credentials: true
 }));
 app.use(morgan("dev"));
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({extended: false}));
 app.use('/uploads', express.static('uploads'));
 
@@ -49,10 +66,13 @@ app.use((err, req, res, next) => {
  });
 });
 
-
-app.listen(PORT, () =>{
+server.listen(PORT, () =>{
   console.log(`Server running at http://localhost:${PORT} `);
 });
+
+//app.listen(PORT, () =>{
+//  console.log(`Server running at http://localhost:${PORT} `);
+//});
 
 
 export default app;

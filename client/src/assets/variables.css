@@ -1,0 +1,11 @@
+:root{
+    --Lpink: rgb(253, 242, 246);
+    --pink1: rgb(248, 159, 198);
+    --pink2: rgb(244, 119, 162);
+    --pink3: rgb(220, 85, 131);
+    --pink4: rgb(174, 62, 98);
+    --bg-gradient: linear-gradient(to bottom, rgb(255, 255, 255), rgb(253, 242, 246));
+
+    /* breakpoint sygnalizujacy przejscie w tryb mobilny*/
+    --bp-mobile: 650px;
+}
