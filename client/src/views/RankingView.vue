@@ -7,7 +7,32 @@
         <h1 class="title-bottom">Users Near You</h1>
       </div>
 
-      <div class="list-container">
+      <div class="tabs-container">
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'likes' }" 
+          @click="switchTab('likes')"
+        >
+          Top Likes ♥
+        </button>
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'matches' }" 
+          @click="switchTab('matches')"
+        >
+          Top Matches 🔥
+        </button>
+      </div>
+
+      <div v-if="loading" class="status-message">
+        Ładowanie rankingu...
+      </div>
+      
+      <div v-else-if="error" class="status-message error">
+        {{ error }}
+      </div>
+
+      <div v-else class="list-container">
         <ul class="ranking-list">
           <li v-for="(user, index) in rankingList" :key="user.id" class="ranking-item">
             
@@ -20,8 +45,8 @@
             </div>
 
             <div class="right-content">
-              <span class="heart">♥</span>
-              <span class="votes">{{ user.votes }}</span>
+              <span class="heart">{{ activeTab === 'likes' ? '♥' : '🔥' }}</span>
+              <span class="votes">{{ user.count }}</span>
             </div>
 
           </li>
@@ -33,36 +58,82 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-//Narazie na sztywno <3
-const rankingList = ref([
-  { id: 1, name: 'Bojack Horseman', votes: 4202 },
-  { id: 2, name: 'Agnieszka', votes: 1213 },
-  { id: 3, name: 'Mama Agnieszki', votes: 767 },
-  { id: 4, name: 'Osoba Bożeńska', votes: 500 },
-  { id: 5, name: 'Mustang', votes: 400 },
-  { id: 6, name: 'Maryśka', votes: 300 },
-  { id: 7, name: 'Joanna Błyszczyk', votes: 200 },
-  { id: 8, name: 'Babcia Agnieszki', votes: 100 },
-]);
+import { ref, onMounted } from 'vue';
+
+const rankingList = ref([]);
+const loading = ref(true);
+const error = ref(null);
+const activeTab = ref('likes');
+const BASE_API_URL = 'http://localhost:3000/api/matches/rank';
+
+const fetchRanking = async () => {
+  try {
+    loading.value = true;
+    error.value = null;
+    rankingList.value = [];
+    const url = `${BASE_API_URL}/${activeTab.value}/all`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      credentials: 'include', 
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (!response.ok) {
+        if (response.status === 401) throw new Error("Musisz być zalogowany.");
+        throw new Error(`Błąd HTTP: ${response.status}`);
+    }
+
+    const json = await response.json();
+
+    if (json.success) {
+      rankingList.value = json.data.map(item => ({
+        id: item.user_info._id,
+        name: item.user_info.name || 'Użytkownik',
+        count: item.likesCounter || item.matchesCounter || 0
+      }));
+    } else {
+      error.value = "Nie udało się pobrać danych.";
+    }
+
+  } catch (err) {
+    console.error(err);
+    error.value = err.message || "Błąd połączenia.";
+  } finally {
+    loading.value = false;
+  }
+};
+
+const switchTab = (tabName) => {
+  if (activeTab.value === tabName) return;
+  activeTab.value = tabName;
+  fetchRanking(); 
+};
+
 const getRankAsset = (index) => {
-    let filename = 'rank-default.png'; 
+  let filename = 'rank-default.png'; 
   if (index === 0) filename = 'rank-1-gold.png'; 
   else if (index === 1) filename = 'rank-2-silver.png'; 
   else if (index === 2) filename = 'rank-3-bronze.png'; 
+  
   return new URL(`../assets/${filename}`, import.meta.url).href;
 };
+
+onMounted(() => {
+  fetchRanking();
+});
 </script>
 
 <style scoped>
 .ranking-page {
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   background: linear-gradient(180deg, #f8d7e0 0%, #fff 100%);
   display: flex;
   justify-content: center;
   align-items: center;
   font-family: 'Poppins', sans-serif;
+  overflow: hidden;
 }
 
 .ranking-card {
@@ -83,7 +154,38 @@ const getRankAsset = (index) => {
   margin-bottom: 1.5rem;
   flex-shrink: 0; 
 }
+.tabs-container {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0 1rem;
+  flex-shrink: 0;
+}
 
+.tab-btn {
+  background: transparent;
+  border: 2px solid #f0f0f0;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+  background: #e67da8;
+  color: white;
+  border-color: #e67da8;
+  box-shadow: 0 4px 10px rgba(230, 125, 168, 0.3);
+}
+
+.tab-btn:hover:not(.active) {
+  border-color: #e67da8;
+  color: #e67da8;
+}
 .title-top {
   font-size: 2rem;
   font-weight: 600;
