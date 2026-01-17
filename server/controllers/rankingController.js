@@ -7,16 +7,22 @@ import mongoose from 'mongoose';
 export async function statLikes(req,res){
     try {
         const gender = req.params.gender;
+        const minAge = parseInt(req.query.minAge) || 18;
+        const maxAge = parseInt(req.query.maxAge) || 100;
+
+        const today = new Date();
+        const minDate = new Date(today.getFullYear() - maxAge - 1, today.getMonth(), today.getDate());
+        const maxDate = new Date(today.getFullYear() - minAge - 1, today.getMonth(), today.getDate());
 
         const ranking = await Like.aggregate([
             {
-                $group: {                               // Grupowanie like'ów względem użytkowników
+                $group: {
                     _id: '$to_user',
                     likesCounter: { $sum: 1 }
                 }
             },
             {
-                $lookup: {                              // Dołączenie tabeli userdatas
+                $lookup: {
                     from: UserData.collection.name,
                     localField: "_id",
                     foreignField: "user_id",
@@ -24,13 +30,23 @@ export async function statLikes(req,res){
                 }
             },
             { $unwind: "$user_info" },                  // Rozbicie tablicy user_info na obiekt
-            ...(gender !== 'all' ? [{ $match: { "user_info.gender": gender } }] : []), // Filtrowanie po płci, gdy nie są to statystyki łączone
-            { $sort: { likesCounter: -1 } },            // Sortowanie malejąco
-            { $limit: 100 },                            // Ograniczenie, tylko 100 wyników
             {
-                $project: {                             // Formatowanie wyniku agregate
+                $match: {
+                    $and: [
+                        ...(gender !== 'all' ? [{ "user_info.gender": gender }] : []),
+                        { "user_info.date_of_birth": { $gte: minDate, $lte: maxDate } }
+                    ]
+                }
+            },
+            { $sort: { likesCounter: -1 } },
+            { $limit: 100 },
+            {
+                $project: {
                     _id: 0,
-                    user_info: 1,
+                    user_info: {
+                        name: 1,
+                        _id: 1
+                    },
                     likesCounter: 1
                 }
             }
@@ -53,30 +69,46 @@ export async function statLikes(req,res){
 export async function statMatches(req,res){
     try {
         const gender = req.params.gender;
+        const minAge = parseInt(req.query.minAge) || 18;
+        const maxAge = parseInt(req.query.maxAge) || 100;
+
+        const today = new Date();
+        const minDate = new Date(today.getFullYear() - maxAge - 1, today.getMonth(), today.getDate());
+        const maxDate = new Date(today.getFullYear() - minAge - 1, today.getMonth(), today.getDate());
 
         const ranking = await Match.aggregate([
             {
-                $group: {                               // Grupowanie mtchy względem użytkowników
+                $group: {
                     _id: '$user_B',
                     matchesCounter: { $sum: 1 }
                 }
             },
             {
-                $lookup: {                              // Dołączenie tabeli userdatas
+                $lookup: {
                     from: "userdatas",
                     localField: "_id",
                     foreignField: "user_id",
                     as: "user_info"
                 }
             },
-            { $unwind: "$user_info" },                  // Rozbicie tablicy user_info na obiekt
-            ...(gender !== 'all' ? [{ $match: { "user_info.gender": gender } }] : []), // Filtrowanie po płci
-            { $sort: { matchesCounter: -1 } },          // Sortowanie malejąco
-            { $limit: 100 },                            // Ograniczenie, tylko 100 wyników
+            { $unwind: "$user_info" },
             {
-                $project: {                             // Formatowanie wyniku agregate
+                $match: {
+                    $and: [
+                        ...(gender !== 'all' ? [{ "user_info.gender": gender }] : []),
+                        { "user_info.date_of_birth": { $gte: minDate, $lte: maxDate } }
+                    ]
+                }
+            },
+            { $sort: { matchesCounter: -1 } },
+            { $limit: 100 },
+            {
+                $project: {
                     _id: 0,
-                    user_info: 1,
+                    user_info: {
+                        name: 1,
+                        _id: 1
+                    },
                     matchesCounter: 1
                 }
             }

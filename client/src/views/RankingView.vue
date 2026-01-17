@@ -53,78 +53,100 @@
         </ul>
       </div>
 
+      <FilterPopup
+        :is-open="isModalOpen"
+        v-model:gender="selectedGender"
+        v-model:age-range="selectedAgeRange"
+        @close="isModalOpen = false"
+        @apply="fetchRanking" />
+
+      <button class="filter-toggle-btn" @click="isModalOpen = true">Filtruj 🛠️</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+  import { ref, onMounted, watch } from 'vue';
+  import FilterPopup from '../components/stats/FilterPopup.vue';
 
-const rankingList = ref([]);
-const loading = ref(true);
-const error = ref(null);
-const activeTab = ref('likes');
-const BASE_API_URL = 'http://localhost:3000/api/matches/rank';
+  const rankingList = ref([]);
+  const loading = ref(true);
+  const error = ref(null);
+  const activeTab = ref('likes');
+  const BASE_API_URL = 'http://localhost:3000/api/matches/rank';
 
-const fetchRanking = async () => {
-  try {
-    loading.value = true;
-    error.value = null;
-    rankingList.value = [];
-    const url = `${BASE_API_URL}/${activeTab.value}/all`;
+  const isModalOpen = ref(false);
+  const selectedGender = ref('all');
+  const selectedAgeRange = ref([18, 99]);
 
-    const response = await fetch(url, {
-      method: 'GET',
-      credentials: 'include', 
-      headers: { 'Content-Type': 'application/json' }
-    });
+  const fetchRanking = async () => {
+    try {
+      loading.value = true;
+      error.value = null;
+      rankingList.value = [];
+
+      const [min, max] = selectedAgeRange.value;
+      const gender = selectedGender.value;
+
+      
+      const url = `${BASE_API_URL}/${activeTab.value}/${gender}?minAge=${min}&maxAge=${max}`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'include', 
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+          if (response.status === 401) throw new Error("Musisz być zalogowany.");
+          throw new Error(`Błąd HTTP: ${response.status}`);
+      }
+
+      const json = await response.json();
+
+      if (json.success) {
+        rankingList.value = json.data.map(item => ({
+          id: item.user_info._id,
+          name: item.user_info.name || 'Użytkownik',
+          count: item.likesCounter || item.matchesCounter || 0
+        }));
+      } else {
+        error.value = "Nie udało się pobrać danych.";
+      }
+      
+
+    } catch (err) {
+      console.error(err);
+      error.value = err.message || "Błąd połączenia.";
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const switchTab = (tabName) => {
+    if (activeTab.value === tabName) return;
+    activeTab.value = tabName;
+    selectedGender.value = 'all';
+    selectedAgeRange.value = [18, 99];
+    fetchRanking(); 
+  };
+
+  const getRankAsset = (index) => {
+    let filename = 'rank-default.png'; 
+    if (index === 0) filename = 'rank-1-gold.png'; 
+    else if (index === 1) filename = 'rank-2-silver.png'; 
+    else if (index === 2) filename = 'rank-3-bronze.png'; 
     
-    if (!response.ok) {
-        if (response.status === 401) throw new Error("Musisz być zalogowany.");
-        throw new Error(`Błąd HTTP: ${response.status}`);
-    }
+    return new URL(`../assets/${filename}`, import.meta.url).href;
+  };
 
-    const json = await response.json();
-
-    if (json.success) {
-      rankingList.value = json.data.map(item => ({
-        id: item.user_info._id,
-        name: item.user_info.name || 'Użytkownik',
-        count: item.likesCounter || item.matchesCounter || 0
-      }));
-    } else {
-      error.value = "Nie udało się pobrać danych.";
-    }
-
-  } catch (err) {
-    console.error(err);
-    error.value = err.message || "Błąd połączenia.";
-  } finally {
-    loading.value = false;
-  }
-};
-
-const switchTab = (tabName) => {
-  if (activeTab.value === tabName) return;
-  activeTab.value = tabName;
-  fetchRanking(); 
-};
-
-const getRankAsset = (index) => {
-  let filename = 'rank-default.png'; 
-  if (index === 0) filename = 'rank-1-gold.png'; 
-  else if (index === 1) filename = 'rank-2-silver.png'; 
-  else if (index === 2) filename = 'rank-3-bronze.png'; 
-  
-  return new URL(`../assets/${filename}`, import.meta.url).href;
-};
-
-onMounted(() => {
-  fetchRanking();
-});
+  onMounted(() => {
+    fetchRanking();
+  });
 </script>
 
 <style scoped>
+
 .ranking-page {
   width: 100%;
   height: 100vh;
@@ -137,6 +159,9 @@ onMounted(() => {
 }
 
 .ranking-card {
+  position: relative; 
+  background: white;
+  width: 600px;
   background: white;
   width: 600px;
   height: 90vh; 
@@ -209,6 +234,13 @@ onMounted(() => {
   
   scrollbar-width: thin;
   scrollbar-color: #e67da8 #fff;
+
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .ranking-list {
@@ -272,5 +304,35 @@ onMounted(() => {
 .votes {
   color: #000;
   font-size: 0.95rem;
+}
+
+.filter-toggle-btn {
+
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10;
+
+  background: transparent;
+  border: 2px solid #f0f0f0;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-toggle-btn.active {
+  background: #e67da8;
+  color: white;
+  border-color: #e67da8;
+  box-shadow: 0 4px 10px rgba(230, 125, 168, 0.3);
+}
+
+.tab-btn:hover:not(.active) {
+  border-color: #e67da8;
+  color: #e67da8;
 }
 </style>
