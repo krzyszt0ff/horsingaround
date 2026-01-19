@@ -71,9 +71,8 @@
   });
 
   function getImageUrl(path) { // To jest do poprawy
-    if (!path) return 'https://via.placeholder.com/50';
-    
-    return;
+    if (!path) return 'https://media.os.fressnapf.com/cms/2022/09/trakehner_portrait.jpg?t=seoimg_703';
+    return path.startsWith('http') ? path : `${API_URL}${path}`;
   }
 
   function formatDate(dateStr) { // Formtowanie daty do postaci hh:mm
@@ -99,9 +98,15 @@
 </script>
 
 <style scoped>
+  h1, h2, h3, h4, h5{
+    color: #666;
+  }
+
   .chat-layout {
     display: flex;
-    height: 100vh;
+    width: 1fr;
+    height: 100%;
+    width: 100%;
     background-color: #fff;
     font-family: 'Segoe UI', sans-serif;
   }
@@ -132,12 +137,12 @@
   }
 
   .chat-item:hover {
-    background-color: #f5f5f5;
+    background-color: var(--Lpink);
   }
 
   .chat-item.active {
-    background-color: #e6f2ff; /* Wyróżnienie aktywnego */
-    border-right: 3px solid #007bff;
+    background-color: var(--Lpink2); /* Wyróżnienie aktywnego */
+    border-right: 3px solid var(--pink3);
   }
 
   .avatar-wrapper {
@@ -180,6 +185,7 @@
   .name {
     font-weight: 600;
     font-size: 1rem;
+    color: #666;
   }
 
   .date {

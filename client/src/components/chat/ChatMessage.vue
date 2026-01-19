@@ -46,7 +46,7 @@
 
 </script>
 
-<style scoped> /* Powodzenia krzysiek */
+<style scoped> /* Powodzenia krzysiek */ /* Dzk */
 
     .message-wrapper {
         display: contents;
@@ -93,7 +93,7 @@
 
     .message-box.mine .message-bubble { 
         grid-column: 2; 
-        background: #0084ff; 
+        background: var(--pink3); 
         color: white; 
         border-radius: 18px 18px 4px 18px; 
     }

@@ -6,10 +6,10 @@
            :src="getImageUrl(activeChat.other_user.images_paths[0])" 
            class="header-avatar" 
          />
-         <div>
+         <div class="active-chat-info">
            <h3>{{ activeChat.other_user.name }}</h3>
-           <span v-if="isOnline" class="status-active">Aktywny teraz</span>
-           <span v-else class="status-inactive">Nieaktywny teraz</span>
+           <span v-if="isOnline" class="status-active">Online</span>
+           <span v-else class="status-inactive">Offline</span>
          </div>
        </div>
     </header>
@@ -33,7 +33,7 @@
         @keyup.enter="handleSend"
         placeholder="Napisz wiadomość..." 
       />
-      <button @click="handleSend" :disabled="!newMessage.trim()">Wyślij</button>
+      <button @click="handleSend" :disabled="!newMessage.trim()">Send</button>
     </div>
   </div>
 </template>
@@ -78,9 +78,9 @@
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate()-1);
 
-    if (d.toDateString() === today) return 'Dzisiaj';
-    if (d.toDateString() === yesterday) return 'Wczoraj';
-    return d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long' });
+    if (d.toDateString() === today) return 'Today';
+    if (d.toDateString() === yesterday) return 'Yesterday';
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
   };
 
   const isNewDay = (currentMsg, prevMsg) => { // Porównywanie dat dwóch wiadomości
@@ -103,7 +103,13 @@
 </script>
 
 <style scoped>
-  .chat-container { display: flex; flex-direction: column; height: 100%; background: #fff; }
+  .chat-container { 
+    display: flex; 
+    flex-direction: column; 
+    height: 100%; 
+    max-height: 100vh;
+    background: #fff; 
+  }
 
   .window-header {
     padding: 15px 20px;
@@ -153,11 +159,12 @@
     border: 1px solid #ddd;
     outline: none;
     background: #f0f2f5;
+    margin-bottom: 0;
   }
 
   .input-area button {
     padding: 10px 20px;
-    background: #0084ff;
+    background: var(--pink4);
     color: white;
     border: none;
     border-radius: 20px;
@@ -168,5 +175,9 @@
   .input-area button:disabled {
     background: #ccc;
     cursor: not-allowed;
+  }
+
+  .active-chat-info{
+    color: #666;
   }
 </style>
