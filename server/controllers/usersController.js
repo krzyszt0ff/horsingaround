@@ -28,6 +28,10 @@ function calculateAge(birthDate) {
 };
 
 async function deleteUploadedFiles(files) {
+  if (!files || !Array.isArray(files) || files.length === 0) {
+        return; // Exit early if there are no files
+    }
+
   try {
     for (const file of files) {
       await fs.promises.unlink(file.path);
@@ -487,6 +491,44 @@ export async function likeUser(req, res) {
   res.status(201).json({ success: true, like: newLike, match_created: true, match: newMatch, user: { profile: otherUser, age: age, distance_km: distance / 1000 } });
 
 };
+
+export async function updateLocation(req,res) {
+  const id = req.user.userId;
+  const { latitude, longitude } = req.body;
+
+  if (latitude === undefined || longitude === undefined) {
+    return res.status(400).json({ success: false, error: "Latitude and Longitude are required" });
+  }
+
+  try {
+     const user = await UserData.findOneAndUpdate(
+      { user_id: id },
+      {
+        $set: {
+          location: {
+            type: "Point",
+            coordinates: [Number(longitude), Number(latitude)]
+          }
+        }
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: "Users profile not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      userdata: user,
+      message: "Location updated successfully"
+    });
+
+  } catch (err) {
+    console.error(`Error occured while updating location: ${err}`);
+    return res.status(500).json({ success: false, error: "A database error has occured." });
+  }
+}
 
 
 //Usunięcie swojego profilu przez zalogowanego użytkownika/administratora

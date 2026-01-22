@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import multer from 'multer';
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { UserData } from '../models/UserData.js';
-import { listUsers, addUser, updateUser, showUser, showMyProfile, reportUser, likeUser } from '../controllers/usersController.js'
+import { listUsers, addUser, updateUser, showUser, showMyProfile, reportUser, likeUser, updateLocation } from '../controllers/usersController.js'
 
 const router = express.Router();
 
@@ -127,6 +127,11 @@ router.put('/update-profile', authMiddleware, upload.none(), async (req, res) =>
   }
 });
 
+// zwraca zaktualizowany profil użytkownika i kod statusu
+// musi być powyżej innymi patchami, bo wyłapuje location z url, jako :id
+router.patch('/location', authMiddleware, updateLocation);
+
+
 //zwraca zaktualizowany profil użytkownika, kod statusu
 //INPUT
 //  * analogicznie do tworzenia profilu (form-data i nazwy pól), ale nie trzeba wszystkich pól, tylko te zmienione wystarczą
@@ -150,7 +155,6 @@ router.post('/:id/report', reportUser);
 //    profile - profil z bazy, age - ile ma lat, distance_km - dystans od zalogowanego użytkownika w km
 //  * NIE MA MATCHA: { success: true, like: , match_created: false }
 router.post('/:id/like', likeUser);
-
 
 //router.delete("/:id", deleteUser); ??
 

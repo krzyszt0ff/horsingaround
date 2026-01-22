@@ -5,13 +5,20 @@
 </template>
 
 <script setup>
-  import { computed } from 'vue';
+  import { computed, onMounted, onUnmounted } from 'vue';
+  import axios from 'axios';
   import { useRoute } from 'vue-router';
   import { publicRoutes } from './router/index'
+  import { useUserStore } from '@/stores/user';
 
   import AppLayout from './components/layout/AppLayout.vue';
 
   const route = useRoute()
+  const userStore = useUserStore();
+  const API_URL = 'http://localhost:3000';
+
+  const UPDATE_INTERVAL = 30000 // to 5 minut w ms
+  let locationUpdateInterval = null;
 
   const layout = computed(() => {
     const path = route.path
@@ -19,8 +26,59 @@
       return 'div'
     }
     return AppLayout
-  })
+  });
 
+  const sendLocationUpdate = async (lat, lng) => {
+    if (!userStore.user) return;
+
+    try {
+        await axios.patch(`${API_URL}/api/users/location`, 
+          {
+            latitude: lat,
+            longitude: lng
+          },
+          { withCredentials: true } 
+        );
+    } catch (err) {
+      console.error("Failed to update location:", err);
+    }
+  }
+
+  const checkAndSendLocation = () => {
+    if (!navigator.geolocation) {
+      console.error("Geolocation is not supported by this browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        sendLocationUpdate(latitude, longitude);
+      },
+      (error) => {
+        console.warn("Geolocation error:", error.message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
+  onMounted(async () => {
+    if (!userStore.user) await userStore.loadUser();
+
+    checkAndSendLocation();
+
+    locationUpdateInterval = setInterval(() => {
+      checkAndSendLocation();
+    }, UPDATE_INTERVAL);
+  });
+
+  onUnmounted(() => {
+    if (locationUpdateInterval) clearInterval(locationUpdateInterval);
+  });
 </script>
 
 <style>

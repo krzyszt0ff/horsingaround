@@ -65,13 +65,13 @@
   onMounted(async () => {
     await chatStore.fetchChats(); // Pobranie chatów
 
-    if (userStore.user?._id) { // Trzeba to przenieść gdzies indziej, od razu po zalogowaniu 
+    if (userStore.user?._id) {
       chatStore.initSocket(userStore.user.user_id); // Połączenie socketowe
     }
   });
 
   function getImageUrl(path) { // To jest do poprawy
-    if (!path) return 'https://media.os.fressnapf.com/cms/2022/09/trakehner_portrait.jpg?t=seoimg_703';
+    if (!path) return 'aabcabc';
     return path.startsWith('http') ? path : `${API_URL}${path}`;
   }
 
