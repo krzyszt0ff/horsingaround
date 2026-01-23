@@ -10,6 +10,9 @@
   import { useRoute } from 'vue-router';
   import { publicRoutes } from './router/index'
   import { useUserStore } from '@/stores/user';
+  import { useChatStore } from '@/stores/chatStore';
+
+  const chatStore = useChatStore();
 
   import AppLayout from './components/layout/AppLayout.vue';
 
@@ -69,11 +72,16 @@
   onMounted(async () => {
     if (!userStore.user) await userStore.loadUser();
 
+    if (userStore.user?._id) {
+      chatStore.initSocket(userStore.user.user_id); // Połączenie socketowe
+    }
+
     checkAndSendLocation();
 
     locationUpdateInterval = setInterval(() => {
       checkAndSendLocation();
     }, UPDATE_INTERVAL);
+    
   });
 
   onUnmounted(() => {

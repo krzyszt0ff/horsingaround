@@ -26,6 +26,8 @@ export const useChatStore = defineStore('chat', {
 
   actions: {
     initSocket(userId) {
+      if (this.myUserId) return;
+
       this.myUserId = userId;
       socketService.connect();                            // Łączenie z serwerem
 

@@ -51,7 +51,7 @@
 
 <script setup>
 
-  import { ref, computed, onMounted } from 'vue';
+  import { ref, computed, onMounted, onUnmounted} from 'vue';
   import { useChatStore, API_URL } from '@/stores/chatStore';
   import ChatWindow from '@/components/chat/ChatWindow.vue';
   import { useUserStore } from '@/stores/user'; 
@@ -64,11 +64,7 @@
 
   onMounted(async () => {
     await chatStore.fetchChats(); // Pobranie chatów
-
-    if (userStore.user?._id) {
-      chatStore.initSocket(userStore.user.user_id); // Połączenie socketowe
-    }
-  });
+  }); // Init socketów został przeniesiony do App.vue, żeby wykonywał się raz a nie przy każdym renderze tego momponentu :-p
 
   function getImageUrl(path) { // To jest do poprawy
     if (!path) return 'aabcabc';
@@ -91,7 +87,6 @@
       const surname = chat.other_user.surnme?.toLowerCase() || '';
       
       return name.includes(input) || surname.includes(input);
-      
     });
   });
 
