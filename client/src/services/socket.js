@@ -1,11 +1,12 @@
 import { io } from "socket.io-client";
+import { SERVER_BASE_URL } from "@/config/env";
 
 class SocketService {
   socket = null;                                    // Połączenie
 
   connect() {                                       // Nawiązywanie połączenia
     if (this.socket) return;                        // Sprawdzanie istnienia danego połączenia, by nie tworzyć kilku socketów do tego samego połączenia
-    this.socket = io("http://localhost:3000", {
+    this.socket = io(SERVER_BASE_URL, {
       withCredentials: true,                        // Umożliwia odczytywanie identyfiktora sesji z ciasteczek (sprawdzanie tożsamości)
       autoConnect: true                             // Automatyczna inicjalizacja sesji, umożliwia reconnect
     });

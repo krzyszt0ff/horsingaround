@@ -9,14 +9,15 @@
 
 <style scoped>
     .logo {
-    width: 4rem;
-    height: 4rem;
+    width: 2.5rem;
+    height: 2.5rem;
     }
 
     .top-bar {
+    grid-row: 1;
     width: 100%;
     z-index: 99;
-    padding: 1.5rem;
+    padding: 0.7rem;
     top: 0;
     position: fixed;
     display: none;
@@ -29,7 +30,6 @@
     border: none;
     font-size: 1.8rem;
     color: gray;
-    font-size: 2.5rem;
     cursor: pointer;
     }
 

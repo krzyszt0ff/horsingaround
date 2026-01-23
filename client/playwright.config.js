@@ -1,5 +1,6 @@
 import process from 'node:process'
 import { defineConfig, devices } from '@playwright/test'
+import { SERVER_BASE_URL } from '@/config/env'
 
 /**
  * Read environment variables from file.
@@ -34,7 +35,7 @@ export default defineConfig({
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173',
+    baseURL: process.env.CI ? 'http://localhost:4173' : SERVER_BASE_URL,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',

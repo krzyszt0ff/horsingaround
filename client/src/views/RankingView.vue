@@ -68,12 +68,13 @@
 <script setup>
   import { ref, onMounted, watch } from 'vue';
   import FilterPopup from '../components/stats/FilterPopup.vue';
+  import { SERVER_BASE_URL } from "@/config/env";
 
   const rankingList = ref([]);
   const loading = ref(true);
   const error = ref(null);
   const activeTab = ref('likes');
-  const BASE_API_URL = 'http://localhost:3000/api/matches/rank';
+  const BASE_API_URL = SERVER_BASE_URL;
 
   const isModalOpen = ref(false);
   const selectedGender = ref('all');

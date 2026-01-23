@@ -25,6 +25,7 @@
     }
     .content {
         width: 100%;
+        height: 100%;
         grid-column: 2;
         display: flex;
         flex-direction: column;
@@ -33,11 +34,24 @@
         font-family: 'Poppins', sans-serif;
     }
 
+    /*
     @media (width <= 650px) {
         .app-layout{
             display: flex;
             align-items: center;
             justify-items: center;
+        }
+    }*/
+
+    @media (width <= 650px) {
+        .app-layout{
+            grid-template-columns: 1fr;
+            grid-template-rows: 4rem 1fr 5.5rem;
+            max-height: 100vh;
+        }
+        .content{
+            grid-column: 1;
+            grid-row: 2;
         }
     }
 </style>

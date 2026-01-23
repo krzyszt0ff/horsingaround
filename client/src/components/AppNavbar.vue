@@ -50,16 +50,14 @@
 
 <style scoped>
     .bottom-nav {
+    grid-row: 3;
     margin-top: auto;
     padding: 1rem 1rem 2rem 1rem;
     width: 100%;
     display: none;
-    position: fixed;
-    bottom: 0;
     justify-content: space-around;
     border-top: 1px solid #ddd;
     background: white;
-    font-size: 1.6rem;
     color: #a94e74;
     z-index: 999;
     }
@@ -73,7 +71,7 @@
     .navbar-btn{
         background: none;
         border: none;
-        font-size: 3rem;
+        font-size: 2rem;
         color: gray;
     }
     .navbar-btn.active{

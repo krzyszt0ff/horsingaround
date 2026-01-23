@@ -80,6 +80,7 @@
 import { ref, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
+import { SERVER_BASE_URL } from "@/config/env";
 
 const router = useRouter();
 const store = useUserStore();
@@ -146,7 +147,7 @@ async function handleSave() {
     form.preferred_gender.forEach(item => {
       formData.append('preferred_gender', item);
     });
-    const response = await fetch("http://localhost:3000/api/users/update-profile", {
+    const response = await fetch(`${SERVER_BASE_URL}/api/users/update-profile`, {
       method: "PUT",
       credentials: "include",
       body: formData 

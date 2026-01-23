@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia';
 import socketService from '@/services/socket';
 import axios from 'axios'; 
+import { SERVER_BASE_URL } from "@/config/env";
 
-export const API_URL = 'http://localhost:3000';
+export const API_URL = SERVER_BASE_URL;
 
 export const useChatStore = defineStore('chat', {
   state: () => ({

@@ -8,7 +8,7 @@
           class="sidebar-btn"
           :class="{ active: route.path === '/app' }"
           :disabled="route.path === '/app'"
-          @click="goTo('/')"
+          @click="goTo('/app')"
         >
         <FontAwesomeIcon icon="heart" class="icon"/>
           Swipe

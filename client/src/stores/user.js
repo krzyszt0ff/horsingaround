@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import { SERVER_BASE_URL } from "@/config/env";
 
 export const useUserStore = defineStore("user", {
   state: () => ({
@@ -25,7 +26,7 @@ export const useUserStore = defineStore("user", {
   actions: {
     async loadUser() {
       try {
-        const res = await fetch("http://localhost:3000/api/users/me", {
+        const res = await fetch(`${SERVER_BASE_URL}/api/users/me`, {
           method: "GET",
           credentials: "include",
           cache: "no-store"
@@ -37,7 +38,7 @@ export const useUserStore = defineStore("user", {
           this.user = null;
           return;
         }
-
+        console.log(res)
         const data = await res.json();
         this.user = data.data.user;
         //teraz age zajmuje się getter wyżej

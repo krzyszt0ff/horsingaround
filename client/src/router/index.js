@@ -16,7 +16,7 @@ import RankingView from '@/views/RankingView.vue';
 import ChatView from '@/views/ChatView.vue'
 //
 
-export const publicRoutes = ["/login", "/signup/step1", "/signup/step2", "/signup/step3"];
+export const publicRoutes = ["/", "/login", "/signup/step1", "/signup/step2", "/signup/step3"];
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

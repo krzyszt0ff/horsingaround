@@ -44,6 +44,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { z } from 'zod';
+import { SERVER_BASE_URL } from "@/config/env";
 
 const router = useRouter();
 const store = useUserStore();
@@ -89,7 +90,7 @@ async function signIn() {
 
   // 2. request do backendu
   try {
-    const response = await fetch('http://localhost:3000/api/auth/login', {
+    const response = await fetch(`${SERVER_BASE_URL}/api/auth/login`, {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -103,13 +104,12 @@ async function signIn() {
 
     const data = await response.json();
     const errMsg = (data && data.error) || 'Wrong email or password.';
-
+    console.log(data)
     if (response.ok && data.success) {
       await store.loadUser();
-      router.push('/');
+      router.push('/app');
       return;
     }
-
     // 3. mapowanie błędów backendu na konkretne pola
 
     // a) email nie istnieje

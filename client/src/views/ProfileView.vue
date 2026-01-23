@@ -19,7 +19,7 @@
 
         <img 
             class="profile-photo-bg" 
-            :src="'http://localhost:3000' + store.user.images_paths[currentImageIndex]" 
+            :src="SERVER_BASE_URL + store.user.images_paths[currentImageIndex]" 
             alt="Profile" 
         />
         
@@ -63,6 +63,7 @@
 import { useUserStore } from '@/stores/user';
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { SERVER_BASE_URL } from "@/config/env";
 
 const router = useRouter();
 const store = useUserStore();
@@ -92,12 +93,13 @@ function toggleInfo() {
 
 async function logout() {
   try {
-    await fetch("http://localhost:3000/api/auth/logout", {
+    await fetch(`${SERVER_BASE_URL}/api/auth/logout`, {
       method: "POST",
       credentials: "include"
     });
     store.logout();
     router.push('/');
+    //do ogarniecia zeby odswiezalo
   } catch (err) {
     console.error('Logout failed', err);
   }

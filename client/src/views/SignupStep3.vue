@@ -50,6 +50,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useRegistrationStore } from '@/stores/registration';
+import { SERVER_BASE_URL } from "@/config/env";
 
 //=============
 // OBSŁUGA ZDJĘĆ
@@ -107,7 +108,7 @@ async function handleFinish() {
 
   try {
     // 1. rejestracja credentials (email + password)
-    const response = await fetch('http://localhost:3000/api/auth/register', {
+    const response = await fetch(`${SERVER_BASE_URL}/api/auth/register`, {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -166,7 +167,7 @@ async function handleFinish() {
     userData.append('longitude', 0);
     userData.append('latitude', 0);
     userData.append('bio', storeAll.bio);
-    const userResponse = await fetch('http://localhost:3000/api/users/', {
+    const userResponse = await fetch(`${SERVER_BASE_URL}/api/users/`, {
       method: 'POST',
       credentials: 'include',
       body: userData,
