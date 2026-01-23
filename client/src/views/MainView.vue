@@ -121,7 +121,8 @@ onMounted(async () => {
   try {
     const res = await fetch(`${SERVER_BASE_URL}/api/users?page=1`, {
       method: 'GET',
-      credentials: 'include'
+      credentials: 'include',
+      cache: 'no-store'
     });
     const data = await res.json();
     if (data.success) {

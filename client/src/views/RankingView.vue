@@ -90,7 +90,7 @@
       const gender = selectedGender.value;
 
       
-      const url = `${BASE_API_URL}/${activeTab.value}/${gender}?minAge=${min}&maxAge=${max}`;
+      const url = `${BASE_API_URL}/api/matches/rank/${activeTab.value}/${gender}?minAge=${min}&maxAge=${max}`;
 
       const response = await fetch(url, {
         method: 'GET',
