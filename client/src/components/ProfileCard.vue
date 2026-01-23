@@ -12,12 +12,12 @@
                 :class="{ active: idx === currentImageIndex }"
             ></div>
         </div>
-
-        <img 
-            class="profile-photo" 
-            :src="SERVER_BASE_URL + user.images_paths[currentImageIndex]" 
-            alt="Profile" 
-        />
+      <img 
+        v-if="user?.images_paths?.length"
+        class="profile-photo" 
+        :src="SERVER_BASE_URL + user.images_paths[currentImageIndex]" 
+        alt="Profile" 
+      />
         
         <div class="click-zone left" @click.stop="prevPhoto"></div>
         <div class="click-zone right" @click.stop="nextPhoto"></div>
