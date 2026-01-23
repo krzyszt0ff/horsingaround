@@ -120,6 +120,9 @@ const savePreferences = (newData) => {
   flex-direction: column;
   justify-content: space-between;
   height: 100vh;
+  position: fixed;
+  left: 0;
+  width: 300px;
 }
 .sidebar-content { display: flex; flex-direction: column; }
 .sidebar-btn {

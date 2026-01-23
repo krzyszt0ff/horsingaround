@@ -92,7 +92,9 @@ async function logout() {
       credentials: "include"
     });
     store.logout();
-    router.push('/');
+    router.push('/').then(() => {
+      window.location.reload()
+    })
     //do ogarniecia zeby odswiezalo
   } catch (err) {
     console.error('Logout failed', err);

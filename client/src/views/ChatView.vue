@@ -43,6 +43,7 @@ function onResize() {
 
 onUnmounted(() => {
   window.removeEventListener('resize', onResize)
+  chatStore.activeChat = null
 })
 
 function handleSelectChat(chat) {
