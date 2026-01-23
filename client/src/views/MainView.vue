@@ -35,13 +35,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useUserStore } from '@/stores/user';
 import ProfileCard from '@/components/ProfileCard.vue';
 import { useTemplateRef } from 'vue';
 import { useElementSize, useMouseInElement } from '@vueuse/core';
 import { useClamp, useProjection } from '@vueuse/math';
 import { SERVER_BASE_URL } from "@/config/env";
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { sessionFilters } from '@/stores/filters';   
 
 const store = useUserStore();
 const users = ref([]);
@@ -117,7 +118,45 @@ function handleTouchEnd() {
   swipe();
 }
 
+const fetchUsers = async () => {
+  loading.value = true;
+  try {
+    let url = `${SERVER_BASE_URL}/api/users?page=1`;
+    
+    if (sessionFilters.isActive) {
+      if (sessionFilters.gender !== 'all') {
+        url += `&gender=${sessionFilters.gender}`;
+      }
+      url += `&minAge=${sessionFilters.ageRange[0]}`;
+      url += `&maxAge=${sessionFilters.ageRange[1]}`;
+      url += `&distance=${sessionFilters.distance}`;
+    }
+
+    const res = await fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    const data = await res.json();
+    
+    if (data.success) {
+      users.value = data.data.filter(u => u.user_id !== store.user.userId);
+      currentIndex.value = 0; 
+      endOfUsers.value = users.value.length === 0;
+    }
+  } catch (err) {
+    console.error('Błąd pobierania użytkowników:', err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+watch(sessionFilters, () => {
+  fetchUsers();
+}, { deep: true });
+
 onMounted(async () => {
+  await fetchUsers();
   try {
     const res = await fetch(`${SERVER_BASE_URL}/api/users?page=1`, {
       method: 'GET',
@@ -182,6 +221,7 @@ function swipe() {
     }
   }
 }
+
 </script>
 
 <style scoped>

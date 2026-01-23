@@ -1,9 +1,10 @@
+
 <template>
   <Teleport to="body">
     <div v-if="isOpen" class="modal-overlay" @click.self="$emit('close')">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>Filters</h2>
+          <h2>Search filters</h2>
           <button class="close-btn" @click="$emit('close')">&times;</button>
         </div>
 
@@ -12,10 +13,10 @@
             <label>Gender</label>
             <div class="pill-group">
               <button 
-                v-for="g in genders" 
+                v-for="g in availableGenders" 
                 :key="g.value"
-                :class="{ active: gender === g.value }"
-                @click="$emit('update:gender', g.value)"
+                :class="{ active: localGender === g.value }"
+                @click="localGender = g.value"
               >
                 {{ g.label }}
               </button>
@@ -23,58 +24,111 @@
           </div>
 
           <div class="filter-section">
-            <label>Age: <span>{{ ageRange[0] }} - {{ ageRange[1] }} lat</span></label>
+            <label>Age: <span>{{ localAgeRange[0] }} - {{ localAgeRange[1] }} years</span></label>
             <div class="slider-wrapper">
-              <input type="range" min="18" max="80" :value="ageRange[0]" 
-                     @input="updateMin($event.target.value)" class="range-input">
-              <input type="range" min="18" max="80" :value="ageRange[1]" 
-                     @input="updateMax($event.target.value)" class="range-input">
+              <input 
+                type="range" 
+                :min="minAllowedAge" 
+                :max="maxAllowedAge" 
+                v-model.number="localAgeRange[0]" 
+                class="range-input"
+              >
+              <input 
+                type="range" 
+                :min="minAllowedAge" 
+                :max="maxAllowedAge" 
+                v-model.number="localAgeRange[1]" 
+                class="range-input"
+              >
+            </div>
+            <p class="hint">Range limited by your profile settings</p>
+          </div>
+
+          <div class="filter-section">
+            <label>Distance: <span>up to {{ localDistance }} km</span></label>
+            <div class="slider-wrapper single">
+              <input 
+                type="range" 
+                min="1" 
+                :max="maxAllowedDistance" 
+                v-model.number="localDistance" 
+                class="range-input"
+              >
             </div>
           </div>
         </div>
 
-        <button class="apply-btn" @click="applyFilters">Apply</button>
+        <button class="apply-btn" @click="handleSave" :disabled="isSaving">
+            {{ isSaving ? 'Applied! ✓' : 'Apply' }}
+        </button>
+        
       </div>
     </div>
   </Teleport>
 </template>
 
+
+
 <script setup>
+import { ref, computed } from 'vue';
 
-  import { GENDER_OPTIONS } from '../../constants/genders.js';
+const props = defineProps({
+  isOpen: Boolean,
+  initialData: Object 
+});
 
-  const props = defineProps({
-    isOpen: Boolean,
-    gender: String,
-    ageRange: Array
+const emit = defineEmits([ 'save']);
+
+const localGender = ref(props.initialData?.preferred_gender || 'all');
+const localAgeRange = ref([
+  props.initialData?.preferred_min_age || 18,
+  props.initialData?.preferred_max_age || 99
+]);
+const localDistance = ref(props.initialData?.preferred_distance || 50);
+
+const availableGenders = computed(() => {
+  const base = props.initialData?.preferred_gender || [];
+  const options = [];
+  
+  if (base.includes('female') && base.includes('male')) {
+    options.push({ label: 'All', value: 'all' });
+  }
+  if (base.includes('female')) {
+    options.push({ label: 'Woman', value: 'female' });
+  }
+  if (base.includes('male')) {
+    options.push({ label: 'Men', value: 'male' });
+  }
+  if (base.includes('other')) {
+    options.push({ label: 'Other', value: 'other' });
+  }
+  return options;
+});
+
+const minAllowedAge = props.initialData?.preferred_min_age || 18;
+const maxAllowedAge = props.initialData?.preferred_max_age || 99;
+const maxAllowedDistance = props.initialData?.preferred_distance || 100;
+
+const isSaving = ref(false);
+
+const handleSave = async () => {
+  isSaving.value = true;
+  
+  emit('save', {
+    preferred_gender: localGender.value === 'all' ? ['female', 'male'] : [localGender.value],
+    preferred_min_age: localAgeRange.value[0],
+    preferred_max_age: localAgeRange.value[1],
+    preferred_distance: localDistance.value
   });
 
-  const emit = defineEmits(['close', 'update:gender', 'update:ageRange', 'apply']);
-
-  const genders = [
-    { label: 'All', value: 'all' },
-    ...GENDER_OPTIONS ];
-
-  const updateMin = (val) => {
-    const min = parseInt(val);
-    if (min >= props.ageRange[1]) return;
-    emit('update:ageRange', [min, props.ageRange[1]]);
-  };
-
-  const updateMax = (val) => {
-    const max = parseInt(val);
-    if (max <= props.ageRange[0]) return;
-    emit('update:ageRange', [props.ageRange[0], max]);
-  };
-
-  const applyFilters = () => {
-    emit('apply');
-    emit('close');
-  };
-  
+  setTimeout(() => {
+    isSaving.value = false;
+  }, 1000);
+};
 </script>
 
 <style scoped>
+
   .modal-overlay {
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh;
@@ -150,4 +204,12 @@
     cursor: pointer;
     border: 2px solid white;
   }
+/* Wykorzystaj swoje style z Filtru, dodając poprawkę dla pojedynczego slidera */
+.slider-wrapper.single {
+  display: block;
+}
+.slider-wrapper.single .range-input {
+  pointer-events: auto; /* Dla pojedynczego suwaka włączamy eventy na całym pasku */
+}
+/* ... reszta Twoich stylów CSS ... */
 </style>

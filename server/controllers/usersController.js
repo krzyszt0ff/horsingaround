@@ -56,12 +56,18 @@ export async function listUsers(req, res) {
   if (userProfile === null) {
     return res.status(404).json({ success: false, error: "User's profile cannot be found" });
   }
+  const genderFilter = req.query.gender 
+    ? [req.query.gender]
+    : userProfile.preferred_gender;
+  const minAge = parseInt(req.query.minAge) || userProfile.preferred_min_age;
+  const maxAge = parseInt(req.query.maxAge) || userProfile.preferred_max_age;
+  const distance = parseInt(req.query.distance) || userProfile.preferred_distance;
 
   const { gender, location, preferred_gender, preferred_min_age, preferred_max_age, preferred_distance } = userProfile;
 
   const today = new Date();
-  const maxDate = new Date(today.getFullYear() - preferred_min_age, today.getMonth(), today.getDate());
-  const minDate = new Date(today.getFullYear() - preferred_max_age, today.getMonth(), today.getDate());
+  const maxDate = new Date(today.getFullYear() - minAge, today.getMonth(), today.getDate());
+  const minDate = new Date(today.getFullYear() - maxAge, today.getMonth(), today.getDate());
 
   const preferred_distance_m = preferred_distance * 1000;
 //  maxDistance: preferred_distance_m, zmieniam na chwile
@@ -76,10 +82,10 @@ export async function listUsers(req, res) {
         $geoNear: {
           near: { type: "Point", coordinates: location.coordinates },
           distanceField: "distance",
-          maxDistance: preferred_distance_m,
+          maxDistance: distance * 1000,
           query: {
             user_id: { $ne: user },
-            gender: { $in: preferred_gender },
+            gender: { $in: genderFilter },
             preferred_gender: gender,
             date_of_birth: { $gte: minDate, $lte: maxDate }
             
