@@ -4,10 +4,6 @@
       <h2>Ładowanie...</h2>
     </div>
 
-    <div v-else-if="users.length === 0" class="no-users">
-      Brak nowych użytkowników do pokazania 
-    </div>
-
     <div v-if="!endOfUsers" class="card-stack">
       <ProfileCard
         v-for="(user, index) in visibleCards"
@@ -30,6 +26,10 @@
 
     <div v-if="endOfUsers" class="no-users">
        To już wszyscy użytkownicy w Twojej okolicy.
+    </div>
+
+    <div v-else-if="users.length === 0" class="no-users">
+      Brak nowych użytkowników do pokazania 
     </div>
   </main>
 </template>

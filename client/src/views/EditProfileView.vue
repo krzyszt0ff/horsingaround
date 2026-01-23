@@ -186,6 +186,7 @@ function handleCancel() {
   flex-direction: column;
   align-items: center;
   width: 380px; 
+  margin: 2rem;
 }
 
 h1 {

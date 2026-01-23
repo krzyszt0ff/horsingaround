@@ -2,6 +2,9 @@
   <div class="chat-container">
     <header class="window-header">
        <div class="user-details" v-if="activeChat">
+        <button class="back-btn" @click="$emit('back')">
+          <FontAwesomeIcon icon="chevron-left" class="icon"/>
+        </button>
          <img 
            :src="getImageUrl(activeChat.other_user.images_paths[0])" 
            class="header-avatar" 
@@ -100,6 +103,7 @@
     newMessage.value = '';                // Czyści input i zmienną
   }
 
+  defineEmits(['back'])
 </script>
 
 <style scoped>
@@ -116,6 +120,8 @@
     border-bottom: 1px solid #eee;
     display: flex;
     align-items: center;
+    position: static;
+    top: 0;
   }
 
   .user-details {
@@ -150,6 +156,8 @@
     border-top: 1px solid #eee;
     display: flex;
     gap: 10px;
+    position: static;
+    bottom: 0;
   }
 
   .input-area input {
@@ -179,5 +187,24 @@
 
   .active-chat-info{
     color: #666;
+  }
+
+  .back-btn{
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: gray;
+  }
+
+  @media (width <= 900px) {
+  .back-btn {
+    display: block;
+  }
+  }
+  @media (width <= 650px) {
+  .chat-container{
+    max-height: calc(100vh - 9.5rem);
+  }
   }
 </style>
