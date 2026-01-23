@@ -59,11 +59,15 @@
 
     .sidebar {
     grid-column: 1;
+    height: 100%;
+    width: 300px;
     background: linear-gradient(to bottom, var(--pink2), var(--pink3));
     box-shadow: 3px 0px 3px rgb(0 0 0 / 20%);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    max-height: 100vh;
+    position: fixed;
     }
 
     .sidebar-content{

@@ -22,6 +22,8 @@
         display: grid;
         grid-template-columns: 300px 1fr;
         background: var(--bg-gradient);
+        max-height: 100vh;
+        overflow-y: auto;
     }
     .content {
         width: 100%;
@@ -47,7 +49,6 @@
         .app-layout{
             grid-template-columns: 1fr;
             grid-template-rows: 4rem 1fr 5.5rem;
-            max-height: 100vh;
         }
         .content{
             grid-column: 1;
