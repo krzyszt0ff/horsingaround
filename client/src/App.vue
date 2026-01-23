@@ -5,16 +5,18 @@
 </template>
 
 <script setup>
-  import { computed, onMounted, onUnmounted } from 'vue';
+  import { computed, onMounted, onUnmounted, watch } from 'vue';
   import axios from 'axios';
   import { useRoute } from 'vue-router';
   import { publicRoutes } from './router/index'
   import { useUserStore } from '@/stores/user';
-
+  import { useChatStore } from '@/stores/chatStore';
   import AppLayout from './components/layout/AppLayout.vue';
 
   const route = useRoute()
   const userStore = useUserStore();
+  const chatStore = useChatStore();
+
   const API_URL = 'http://localhost:3000';
 
   const UPDATE_INTERVAL = 30000 // to 5 minut w ms
@@ -27,6 +29,23 @@
     }
     return AppLayout
   });
+
+  const startTracking = () => {
+    if (locationUpdateInterval) clearInterval(locationUpdateInterval);
+
+    checkAndSendLocation();
+
+    locationUpdateInterval = setInterval(() => {
+      checkAndSendLocation();
+    }, UPDATE_INTERVAL);
+  };
+
+  const stopTracking = () => {
+    if(locationUpdateInterval) {
+      clearInterval(locationUpdateInterval);
+      locationUpdateInterval = null;
+    }
+  };
 
   const sendLocationUpdate = async (lat, lng) => {
     if (!userStore.user) return;
@@ -66,19 +85,30 @@
     );
   };
 
+  watch(
+    () => userStore.user,
+    (newUser) => {
+      const isPublic = publicRoutes.includes(route.path);
+      if (newUser && !isPublic) {
+        startTracking();
+        const id = newUser.user_id;
+        if (id) {
+          chatStore.initSocket(id);
+        }
+      } else stopTracking();
+    },
+    { immediate: true, deep: true }
+  );
+
   onMounted(async () => {
-    if (!userStore.user) await userStore.loadUser();
-
     checkAndSendLocation();
-
-    locationUpdateInterval = setInterval(() => {
-      checkAndSendLocation();
-    }, UPDATE_INTERVAL);
+    if (!userStore.user) await userStore.loadUser();    
   });
 
   onUnmounted(() => {
-    if (locationUpdateInterval) clearInterval(locationUpdateInterval);
+    stopTracking();
   });
+
 </script>
 
 <style>
