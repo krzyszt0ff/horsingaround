@@ -69,6 +69,7 @@
       </div>
 
       <div class="buttons">
+        <button class="photo-btn" @click="$router.push('/profile/edit/photos')">Edit Photos</button>
         <button class="save-btn" @click="handleSave">Save</button>
         <button class="cancel-btn" @click="handleCancel">Cancel</button>
       </div>
@@ -185,7 +186,7 @@ function handleCancel() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 380px; 
+  width: 480px; 
   margin: 2rem;
 }
 
@@ -281,11 +282,19 @@ label {
   width: 100%;
   gap: 1rem;
 }
-
-.save-btn, .cancel-btn {
+.photo-btn {
+  background: linear-gradient(90deg, #e67da8, #cf4e7d);
+  color: white;
+  white-space: nowrap;
+}
+.photo-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgba(207, 78, 125, 0.3);
+}
+.save-btn, .cancel-btn, .photo-btn {
   border: none;
   border-radius: 40px;
-  padding: 0.8rem 0; 
+  padding: 0.8rem 1.2rem;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;

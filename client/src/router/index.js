@@ -15,6 +15,7 @@ import RankingView from '@/views/RankingView.vue';
 //
 import ChatView from '@/views/ChatView.vue'
 //
+import PhotoEditView from '@/views/PhotoEditView.vue';
 
 export const publicRoutes = ["/", "/login", "/signup/step1", "/signup/step2", "/signup/step3"];
 
@@ -32,6 +33,7 @@ const router = createRouter({
     { path: '/profile', name: 'profile', component: ProfileView, meta: {requiresAuth: true} },
 
     { path: '/profile/edit', name: 'edit-profile', component: EditProfileView, meta: {requiresAuth: true} },
+    { path: '/profile/edit/photos', name: 'PhotoEdit', component: PhotoEditView, meta: {requiresAuth: true} },
 
     { path: '/ranking', name: 'ranking', component: RankingView, meta: {requiresAuth: true} },
 
