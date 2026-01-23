@@ -22,7 +22,7 @@
         v-for="(msg, index) in messages"
         :key="msg._id"
         :message="msg"
-        :is-mine="String(msg.from_user) === String(store.myUserId)"
+        :is-mine="String(msg.from_user?._id || msg.from_user) === String(store.myUserId)"
         :is-clicked="activeMessageId === msg._id"
         :show-date-separator="isNewDay(msg, messages[index - 1])"
         :formatted-date="formatFullDate(msg.created_at)"
