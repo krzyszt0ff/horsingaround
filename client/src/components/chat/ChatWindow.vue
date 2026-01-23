@@ -113,6 +113,7 @@
     height: 100%; 
     max-height: 100vh;
     background: #fff; 
+    touch-action: pan-y;
   }
 
   .window-header {
@@ -120,8 +121,6 @@
     border-bottom: 1px solid #eee;
     display: flex;
     align-items: center;
-    position: static;
-    top: 0;
   }
 
   .user-details {
@@ -156,8 +155,6 @@
     border-top: 1px solid #eee;
     display: flex;
     gap: 10px;
-    position: static;
-    bottom: 0;
   }
 
   .input-area input {
@@ -204,7 +201,7 @@
   }
   @media (width <= 650px) {
   .chat-container{
-    max-height: calc(100vh - 9.5rem);
+    max-height: calc(100dvh - 9.5rem);
   }
   }
 </style>

@@ -31,6 +31,10 @@
     <div v-else-if="users.length === 0" class="no-users">
       Brak nowych użytkowników do pokazania 
     </div>
+    <div class="horse" ref="horseGif">
+      <img :src="matchPngUrl">
+      <img :src=horseGifUrl>
+    </div>
   </main>
 </template>
 
@@ -42,7 +46,10 @@ import { useElementSize, useMouseInElement } from '@vueuse/core';
 import { useClamp, useProjection } from '@vueuse/math';
 import { SERVER_BASE_URL } from "@/config/env";
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import { sessionFilters } from '@/stores/filters';   
+import { sessionFilters } from '@/stores/filters'; 
+import matchAudioUrl from '@/assets/match.mp3';  
+import horseGifUrl from '@/assets/horse.gif';
+import matchPngUrl from '@/assets/match.png'
 
 const store = useUserStore();
 const users = ref([]);
@@ -53,6 +60,22 @@ const endOfUsers = ref(false);
 const visibleCards = computed(() =>
   users.value.slice(currentIndex.value, currentIndex.value + 3)
 )
+
+const audio = new Audio(matchAudioUrl)
+
+const horseGif = ref(null);
+
+function startAnimation() {
+  const el = horseGif.value;
+  if (!el) return;
+
+  el.classList.remove('animate');
+  void el.offsetWidth;
+  el.classList.add('animate');
+  el.addEventListener('animationend', () => {
+  el.classList.remove('animate');
+  });
+}
 
 const currentImageIndex = ref(0);
 const isExpanded = ref(false);
@@ -198,7 +221,10 @@ async function like() {
       method: 'POST', credentials: 'include'
   });
   const data = await res.json();
-  if (data.match_created) alert('🔥 MATCH!');
+  if (data.match_created) {
+    audio.play()
+    startAnimation()
+  }
   nextCard();
 }
 
@@ -294,5 +320,28 @@ function swipe() {
   .card-stack{
     padding-top: 4rem;
   }
+}
+
+.horse{
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  z-index: 99;
+  left: -100vw;
+}
+
+.horse.animate {
+  animation: fly-across 2s linear forwards;
+}
+
+@keyframes fly-across {
+  0% { left: -50vw; }
+  100% { left: 100vw; }
+}
+
+.horse img{
+  object-fit: contain;
+  width: auto;
+  height: auto;
 }
 </style>

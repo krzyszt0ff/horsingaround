@@ -34,6 +34,8 @@
         align-items: center;
         justify-content: center;
         font-family: 'Poppins', sans-serif;
+        touch-action: pan-y;
+        touch-action: pan-x;
     }
 
     /*

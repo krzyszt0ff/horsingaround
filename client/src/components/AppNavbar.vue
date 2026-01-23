@@ -62,6 +62,8 @@
     background: white;
     color: #a94e74;
     z-index: 999;
+    touch-action: pan-y;
+    touch-action: pan-x;
     }
 
     @media (width <= 650px) {
