@@ -102,10 +102,12 @@ export const useChatStore = defineStore('chat', {
 
     // Obsługa wysyłania wiadomości
     sendMessage(text) {
+      const currentMatchId = this.activeChat.match_id || this.activeChat._id;
       if (!this.activeChat || !text.trim()) return; // Warunek do wysyłania wiadomości - wybrany chat i treść wiadomości nie złożona z samych znaków białych
 
+      console.log("Sending message to match ID:", currentMatchId);
       socketService.emit('send_message', { // Wysyłanie wiadomości/sygnału do serwera
-        matchId: this.activeChat.match_id,
+        matchId: currentMatchId,
         text: text
       });
     }

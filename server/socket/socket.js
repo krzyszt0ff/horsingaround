@@ -68,6 +68,8 @@ export default function setupSocket(io) { // Funkcja inicjalizcyjna
 
     // Wysyłanie wiadomości
     socket.on("send_message", async ({ matchId, text }) => {
+      console.log(`[SOCKET] Received message for match: ${matchId}`);
+      
       try {
         const senderId = userId;
         const match = await Match.findById(matchId);

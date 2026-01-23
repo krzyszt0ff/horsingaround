@@ -91,7 +91,7 @@
       const isPublic = publicRoutes.includes(route.path);
       if (newUser && !isPublic) {
         startTracking();
-        const id = newUser.user_id;
+        const id = newUser.user_id || newUser._id;
         if (id) {
           chatStore.initSocket(id);
         }
