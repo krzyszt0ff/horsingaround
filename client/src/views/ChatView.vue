@@ -36,10 +36,13 @@
 import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { useChatStore } from '@/stores/chatStore'
 import { SERVER_BASE_URL } from "@/config/env"
+import { useUserStore } from '@/stores/user'
 
 import ChatSidebar from '@/components/chat/ChatSidebar.vue'
 import ChatWindow from '@/components/chat/ChatWindow.vue'
 import ProfileCard from '@/components/ProfileCard.vue'
+
+const store = useUserStore()
 
 const chatStore = useChatStore()
 
@@ -51,6 +54,7 @@ const isProfileOpen = ref(false)
 const selectedUserForPreview = ref(null)
 
 onMounted(async () => {
+  await store.loadUser();
   await chatStore.fetchChats()
   window.addEventListener('resize', onResize)
 })
