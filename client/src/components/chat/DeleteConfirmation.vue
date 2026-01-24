@@ -6,8 +6,12 @@
         <p>{{ message }}</p>
         
         <div class="modal-buttons">
-          <button class="confirm-btn" @click="$emit('confirm')">Delete</button>
-          <button class="cancel-btn" @click="$emit('close')">Cancel</button>
+            <button class="confirm-btn" @click="$emit('confirm')">
+                {{ isInfoOnly ? 'Understood' : 'Delete' }}
+            </button>
+            <button v-if="!isInfoOnly" class="cancel-btn" @click="$emit('close')">
+                Cancel
+            </button>
         </div>
       </div>
     </div>
@@ -18,7 +22,11 @@
 defineProps({
   show: Boolean,
   title: String,
-  message: String
+  message: String,
+  isInfoOnly: {
+    type:Boolean,
+    default: false
+  }
 });
 defineEmits(['close', 'confirm']);
 </script>

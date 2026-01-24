@@ -12,6 +12,10 @@ export const useChatStore = defineStore('chat', {
     messages: [],             // Wiadomości obecnie otwartego chatu
     onlineUsers: new Set(),   // Lista aktywnych użytkowników
     myUserId: null,           // ID użytkownika
+    matchDeletedInfo: {
+    show: false,
+    partnerName: ''
+    },
   }),
 
   getters: {
@@ -35,13 +39,26 @@ export const useChatStore = defineStore('chat', {
         this.onlineUsers = new Set(users);
       });
 
-      // Obsługa aktywności użytkowników (gdy wchodzą/wychodzą)
       socketService.on('user_online', (user) => this.onlineUsers.add(user));
       socketService.on('user_offline', (user) => this.onlineUsers.delete(user));
-
-      // Odbieranie i wysyłanie wiadomości
       socketService.on('new_message', (msg) => this.handleIncomingMessage(msg));
       socketService.on('message_sent', (msg) => this.handleIncomingMessage(msg));
+      socketService.on('match_deleted', (data) => {
+          const chatToDelete = this.chats.find(c => c.match_id === data.match_id);
+          const partnerName = chatToDelete?.other_user?.name || "Someone";
+          this.chats = this.chats.filter(c => c.match_id !== data.match_id);
+          if (this.activeChat && this.activeChat.match_id === data.match_id) {
+              this.activeChat = null;
+              this.messages = [];
+              this.matchDeletedInfo = {
+                  show: true,
+                  partnerName: partnerName
+              };
+          }
+          if (this.previewedUser && this.previewedUser.match_id === data.match_id) {
+              this.previewedUser = null;
+    }
+});
     },
 
     // Obsługa wiadomości (listy chatów)

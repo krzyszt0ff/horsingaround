@@ -29,6 +29,14 @@
           </div>
         </div>
       </Transition>
+      <DeleteConfirmation 
+      :show="chatStore.matchDeletedInfo.show"
+      :is-info-only="true"
+      title="Match Removed"
+      :message="`Your match with ${chatStore.matchDeletedInfo.partnerName} has been deleted by the other user.`"
+      @confirm="closeDeletionInfo"
+      @close="closeDeletionInfo"
+    />
     </div>
 </template>
 
@@ -37,6 +45,7 @@ import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { useChatStore } from '@/stores/chatStore'
 import { SERVER_BASE_URL } from "@/config/env"
 import { useUserStore } from '@/stores/user'
+import DeleteConfirmation from '@/components/chat/DeleteConfirmation.vue';
 
 import ChatSidebar from '@/components/chat/ChatSidebar.vue'
 import ChatWindow from '@/components/chat/ChatWindow.vue'
@@ -67,7 +76,9 @@ onUnmounted(() => {
   window.removeEventListener('resize', onResize)
   chatStore.activeChat = null
 })
-
+function closeDeletionInfo() {
+  chatStore.matchDeletedInfo.show = false;
+}
 function handleSelectChat(chat) {
   chatStore.selectChat(chat)
   if (!isDesktop.value) {

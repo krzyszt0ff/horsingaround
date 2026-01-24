@@ -32,7 +32,7 @@ const io = new Server(server, {
 });
 
 setupSocket(io);
-
+app.set('io', io);
 app.use(cors({
   origin: CLIENT_BASE_URL,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], //bo delete jest non-simple

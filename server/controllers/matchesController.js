@@ -1,5 +1,6 @@
 import { Match } from "../models/Match.js";
 import { Message } from "../models/Message.js";
+import { Like } from "../models/Like.js";
 import { UserData } from "../models/UserData.js";
 import mongoose from 'mongoose';
 
@@ -62,23 +63,42 @@ export async function listMatches(req,res){
 export async function deleteMatch(req, res) {
     try {
         const ids = req.body.ids; 
-        
-        if (!ids || !Array.isArray(ids)) {
-            return res.status(400).json({ success: false, error: "Invalid IDs format" });
-        }
-        await Message.deleteMany({ match_id: { $in: ids } });
-        const deletedResult = await Match.deleteMany({ _id: { $in: ids } });
+        const userId = req.user.userId;
+        const matchesToDelete = await Match.find({ _id: { $in: ids } });
 
-        return res.status(200).json({ 
-            success: true,
-            deletedCount: deletedResult.deletedCount 
-        });
+        if (!matchesToDelete.length) {
+            return res.status(404).json({ success: false, error: "Match not found" });
+        }
+        for (const match of matchesToDelete) {
+            const { user_A, user_B } = match;
+            await Like.deleteMany({
+                $or: [
+                    { from_user: user_A, to_user: user_B },
+                    { from_user: user_B, to_user: user_A }
+                ]
+            });
+            await Message.deleteMany({ match_id: match._id });
+            await Match.deleteOne({ _id: match._id });
+        }
+        const io = req.app.get('io');
+        if (io) {
+            matchesToDelete.forEach(match => {
+                const otherUserId = match.user_A.toString() === userId 
+                    ? match.user_B 
+                    : match.user_A;
+                io.to(`user_${otherUserId}`).emit('match_deleted', { 
+                    match_id: match._id.toString() 
+                });
+            });
+        }
+
+        return res.status(200).json({ success: true });
 
     } catch (err) {
-        console.error("Delete Error:", err);
+        console.error("Błąd podczas usuwania pary:", err);
         return res.status(500).json({
             success: false,
-            error: "Failed to delete chosen matches."
+            error: "Failed to delete chosen matches and related data."
         });
     }
 };
