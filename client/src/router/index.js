@@ -38,11 +38,6 @@ const router = createRouter({
     { path: '/ranking', name: 'ranking', component: RankingView, meta: {requiresAuth: true} },
 
     { path: '/chat', name: 'chat-contacts', component: ChatView, meta: {requiresAuth: true} },
-    //DO OSOBY ZAJMUJACEJ SIE IMPLEMENTACJA CHATU: TUTAJ PO SLASHU TRZEBA BY BYLO PEWNIE DODAC JAKOS
-    //ID UZYTKOWNIKA PEWNIE ALBO JAKIS HASH NWM NWM JAK NARAZIE ZOSTAWIAM TO TAK PUSTO
-    // Generalnie /chat/:chatId nie bedzie potrzebne, ale ty jestes szefem i ty decydujesz o sprawach przod-koniec
-    // OK!
-    { path: '/chat/:chatId', name: 'chat', component: ChatView, meta: {requiresAuth: true}},
 
     // opcjonalnie: fallback
     { path: '/:pathMatch(.*)*', redirect: '/' }
