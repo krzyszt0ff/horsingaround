@@ -59,27 +59,26 @@ export async function listMatches(req,res){
     }
 };
 
-export async function deleteMatch(req,res){
+export async function deleteMatch(req, res) {
     try {
-        const ids = req.body.ids;             // wyciągamy z JSONa tablicę z id, które mamy usunąć
-        const matches = await Match.find({    // szukamy matchy do usunięcia
-            _id: { $in: ids }
-        })
-        const picked_matches = matches.map(m => m._id);                                   // Tablica samych id matchy, ktore mamy usunac (mapujemy same id)
-        const deleted_matches = await Match.deleteMany({ _id: { $in: picked_matches } }); // Usuwanie obiektów + counter
-        const skipped_matches = ids.filter(id => !picked_matches.includes(id));           // Wybrane id, które nie zostały usunięte (nie było ich bo nie było ich w bazie), szczerze nie wiem po co to jak terz na to ptrze, chyba mozna usunac
+        const ids = req.body.ids; 
+        
+        if (!ids || !Array.isArray(ids)) {
+            return res.status(400).json({ success: false, error: "Invalid IDs format" });
+        }
+        await Message.deleteMany({ match_id: { $in: ids } });
+        const deletedResult = await Match.deleteMany({ _id: { $in: ids } });
 
         return res.status(200).json({ 
             success: true,
-            deleted: deleted_matches,
-            not_deleted: skipped_matches
+            deletedCount: deletedResult.deletedCount 
         });
 
     } catch (err) {
-        console.error(err);
+        console.error("Delete Error:", err);
         return res.status(500).json({
             success: false,
-            error: "Filed to delete chosen matches."
+            error: "Failed to delete chosen matches."
         });
     }
 };

@@ -185,7 +185,6 @@ h1 { color: #a94e74; margin-bottom: 0.5rem; }
   border-radius: 10px;
 }
 
-/* Przycisk x w rogu */
 .remove-icon {
   position: absolute;
   top: -8px; right: -8px;

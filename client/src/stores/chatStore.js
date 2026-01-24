@@ -99,7 +99,7 @@ export const useChatStore = defineStore('chat', {
             console.error("Błąd pobierania wiadomości:", err);
         }
     },
-
+    
     // Obsługa wysyłania wiadomości
     sendMessage(text) {
       const currentMatchId = this.activeChat.match_id || this.activeChat._id;
@@ -110,6 +110,29 @@ export const useChatStore = defineStore('chat', {
         matchId: currentMatchId,
         text: text
       });
+    },
+async deleteMatch(matchId) {
+  try {
+    const res = await axios.delete(`${API_URL}/api/matches`, {
+      data: { ids: [matchId] },
+      withCredentials: true
+    });
+    console.log("Serwer odpowiedział:", res.data);
+    if (res.data.success) {
+      this.chats = this.chats.filter(c => c.match_id !== matchId);
+      this.activeChat = null;
+      return true;
     }
+    return false;
+  } catch (err) {
+    // KLUCZOWE: Wypisz błąd w konsoli!
+    console.error("Pełny błąd axios:", err);
+    if (err.response) {
+       console.error("Status błędu:", err.response.status);
+       console.error("Dane błędu:", err.response.data);
+    }
+    return false;
+  }
+}
   }
 });

@@ -3,6 +3,7 @@ import express from 'express';
 import morgan from 'morgan';
 import path from 'path';
 import cors from 'cors';
+import 'dotenv/config';
 
 import { createServer } from 'node:http';
 import { Server } from "socket.io";
@@ -34,6 +35,7 @@ setupSocket(io);
 
 app.use(cors({
   origin: CLIENT_BASE_URL,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], //bo delete jest non-simple
   credentials: true
 }));
 app.use(morgan("dev"));
