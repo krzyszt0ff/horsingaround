@@ -17,10 +17,10 @@
         :class="{ active: chatStore.activeChat?.match_id === chat.match_id }"
         @click="select(chat)"
       >
-        <div class="avatar-wrapper">
+        <div class="avatar-wrapper" @click.stop="openProfile(chat.other_user)">
           <img
             :src="getImageUrl(chat.other_user.images_paths[0])"
-            class="avatar"
+            class="avatar clickable-avatar"
             alt="Avatar"
           />
           <span
@@ -58,12 +58,15 @@ import { useChatStore, API_URL } from '@/stores/chatStore'
 const chatStore = useChatStore()
 const searchQuery = ref('')
 
-const emit = defineEmits(['select-chat'])
+const emit = defineEmits(['select-chat', 'open-user-profile'])
 
 function select(chat) {
   emit('select-chat', chat)
 }
-
+function openProfile(otherUser) {
+  const id = otherUser.user_id || otherUser._id;
+  emit('open-user-profile', id);
+}
 function getImageUrl(path) {
   if (!path) return 'aabcabc'
   return path.startsWith('http') ? path : `${API_URL}${path}`
@@ -190,5 +193,14 @@ h2{
   border: 1px solid #ddd;
   border-radius: 20px;
   outline: none;
+}
+.clickable-avatar {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.clickable-avatar:hover {
+  transform: scale(1.1);
+  border: 2px solid var(--pink3);
 }
 </style>

@@ -8,6 +8,8 @@
          <img 
            :src="getImageUrl(activeChat.other_user.images_paths[0])" 
            class="header-avatar" 
+           @click="$emit('open-profile')"
+            style="cursor: pointer"
          />
          <div class="active-chat-info">
            <h3>{{ activeChat.other_user.name }}</h3>
@@ -103,7 +105,7 @@
     newMessage.value = '';                // Czyści input i zmienną
   }
 
-  defineEmits(['back'])
+  defineEmits(['back', 'open-profile']);
 </script>
 
 <style scoped>
