@@ -1,6 +1,7 @@
 import express from 'express';
-import {register, login, logout} from '../controllers/authController.js'
 import { authMiddleware } from "../middleware/authMiddleware.js";
+import {register, login, logout, deleteCredentials} from '../controllers/authController.js'
+
 const router = express.Router();
 
 //rejestracja nowego użytkownika
@@ -16,5 +17,8 @@ router.post('/login', login);
 //wylogowywanie zalogowanego użytkownika
 //OUTPUT: success: true, message LUB success: false, error
 router.post("/logout", logout);
+
+//rollback credentiali użytkownika na wypadek, gdyby rejestracja się popsuła <3
+router.delete('/credentials/:userId', deleteCredentials);
 
 export default router;
