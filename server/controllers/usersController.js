@@ -425,11 +425,10 @@ export async function reportUser(req, res) {
   const now = new Date();
 
   const newReport = {
-     user_id: id,                    // zamiast reporter_id
+     reporter_id: id,                    // zamiast reporter_id
   reported_user_id: otherId,       // zostaje
   created_at: now,
   text_content: textContent,
-  status: "new",                  // <to do admin ui
   inspected: false
   };
 

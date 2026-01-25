@@ -2,37 +2,39 @@ import { UserCredentials } from "../models/UserCredentials.js";
 import { Report } from "../models/Report.js";
 import { UserData } from "../models/UserData.js";
 
-export async function listReports(req, res){
- try {
-    const reports = await Report.find().populate("user_id", "email role");
+export async function listReports(req, res) {
+  try {
+    const reports = await Report.find()
+      .populate({ path: "reporter_id", model: "UserCredentials", select: "email role" })
+      .populate({ path: "reported_user_id", model: "UserCredentials", select: "email role" });
+
     res.status(200).json(reports);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
+}
 
-};
-
-export async function getReport(req, res){
-     try {
+export async function getReport(req, res) {
+  try {
     const report = await Report.findById(req.params.id)
-      .populate("user_id", "email role");
+      .populate({ path: "reporter_id", model: "UserCredentials", select: "email role" })
+      .populate({ path: "reported_user_id", model: "UserCredentials", select: "email role" });
 
-    if (!report)
-      return res.status(404).json({ message: "Report not found" });
+    if (!report) return res.status(404).json({ message: "Report not found" });
 
     res.status(200).json(report);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-};
+}
 
 export async function changeReportStatus(req, res){
 try {
-    const { status } = req.body;
+    const { inspected } = req.body;
 
     const updated = await Report.findByIdAndUpdate(
       req.params.id,
-      { status },
+      { inspected: !!inspected  },
       { new: true }
     );
 

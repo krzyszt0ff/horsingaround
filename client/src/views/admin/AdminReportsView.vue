@@ -7,7 +7,7 @@
         <select class="select" v-model="statusFilter">
           <option value="">Wszystkie</option>
           <option value="new">new</option>
-          <option value="in_progress">in_progress</option>
+        
           <option value="resolved">resolved</option>
         </select>
 
@@ -25,8 +25,8 @@
         <div class="top">
           <div>
             <div class="title">
-              {{ r.user_id?.email || "unknown user" }}
-              <span class="role">({{ r.user_id?.role }})</span>
+              {{ r.reporter_id?.email || "unknown user" }}
+              <span class="role">({{ r.reporter_id?.role }})</span>
             </div>
             <div class="meta">
               ID: <span class="mono">{{ r._id }}</span>
@@ -35,10 +35,9 @@
 
           <div class="status">
             <div class="label">Status</div>
-            <select class="select" v-model="r.status" @change="changeStatus(r)">
-              <option value="new">new</option>
-              <option value="in_progress">in_progress</option>
-              <option value="resolved">resolved</option>
+            <select class="select" v-model="r.inspected" @change="changeStatus(r)">
+              <option :value="false">new</option>
+              <option :value="true">resolved</option>
             </select>
           </div>
         </div>
@@ -87,7 +86,7 @@ const changeStatus = async (r) => {
   try {
     await axios.patch(
       `${ADMIN_BASE}/reports/${r._id}`,
-      { status: r.status },
+      { status: r.inspected },
       { withCredentials: true }
     );
   } catch (e) {
@@ -102,7 +101,9 @@ const toggle = (id) => {
 
 const filteredReports = computed(() => {
   if (!statusFilter.value) return reports.value;
-  return reports.value.filter(r => r.status === statusFilter.value);
+
+  const wantInspected = statusFilter.value === "resolved";
+  return reports.value.filter(r => !!r.inspected === wantInspected);
 });
 
 onMounted(fetchReports);
