@@ -81,8 +81,14 @@ export async function statMatches(req,res){
 
         const ranking = await Match.aggregate([
             {
+                $project: {
+                    participants: ["$user_A", "$user_B"]
+                }
+            },
+            { $unwind: "$participants" },
+            {
                 $group: {
-                    _id: '$user_B',
+                    _id: '$participants',
                     matchesCounter: { $sum: 1 }
                 }
             },
