@@ -16,8 +16,9 @@ import matchesRouter from './routes/matches.js';
 import { authMiddleware } from './middleware/authMiddleware.js';
 
 import setupSocket from "./socket/socket.js";
+import { parse } from "node:path";
 
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT);
 
 var app = express();
 const server = createServer(app);
@@ -74,9 +75,6 @@ server.listen(PORT, () =>{
   console.log(`Server running at http://localhost:${PORT} `);
 });
 
-//app.listen(PORT, () =>{
-//  console.log(`Server running at http://localhost:${PORT} `);
-//});
 
 
 export default app;

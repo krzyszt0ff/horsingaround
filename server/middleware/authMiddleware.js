@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
-export const JWT_SECRET = "bardzosekretnysekret"; //Potrzebuje go do dekodowania przy socketach
+import "dotenv/config";
 
 
+const JWT_SECRET = process.env.JWT_SECRET;
 export function authMiddleware(req, res, next) {
 
   /* NWM CZY TO USUWAC CZY NIE ALE MUSZE ZMIENIC JAK JEST WYCZYTYWANY TOKEN SORKIII
