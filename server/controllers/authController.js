@@ -49,8 +49,8 @@ export async function register(req, res) {
 
     res.cookie("token", token, {
     httpOnly: true,
-    sameSite: "lax",
-    secure: false, // DO LOKALNEGO HPSTINGU!!! normalnie process.env.NODE_ENV === "production"
+    sameSite: "none",
+    secure: true, 
     });
 
     return res.status(200).json({success: true, userId: newUser._id});
@@ -90,8 +90,8 @@ export async function login(req, res) {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: false, // do lokalnego hostingu!!! normalnie true
-        sameSite: "strict",
+        secure: true, 
+        sameSite: "none",
         maxAge: 1000 * 60 * 60 * 24
     });
 
@@ -103,8 +103,8 @@ export async function logout(req, res) {
   try {
     res.clearCookie("token", {
       httpOnly: true,
-      sameSite: "lax",
-      secure: false,   // w dev false, w produkcji true
+      sameSite: "none",
+      secure: true,   // w dev false, w produkcji true
       path: "/"        // musi być IDENTYCZNY jak przy ustawianiu
     });
 

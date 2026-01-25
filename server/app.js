@@ -3,6 +3,7 @@ import express from 'express';
 import morgan from 'morgan';
 import path from 'path';
 import cors from 'cors';
+import 'dotenv/config';
 
 import { createServer } from 'node:http';
 import { Server } from "socket.io";
@@ -15,8 +16,9 @@ import matchesRouter from './routes/matches.js';
 import { authMiddleware } from './middleware/authMiddleware.js';
 
 import setupSocket from "./socket/socket.js";
+import { parse } from "node:path";
 
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT);
 
 var app = express();
 const server = createServer(app);
@@ -31,9 +33,10 @@ const io = new Server(server, {
 });
 
 setupSocket(io);
-
+app.set('io', io);
 app.use(cors({
   origin: CLIENT_BASE_URL,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], //bo delete jest non-simple
   credentials: true
 }));
 app.use(morgan("dev"));
@@ -72,9 +75,6 @@ server.listen(PORT, () =>{
   console.log(`Server running at http://localhost:${PORT} `);
 });
 
-//app.listen(PORT, () =>{
-//  console.log(`Server running at http://localhost:${PORT} `);
-//});
 
 
 export default app;

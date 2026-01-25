@@ -158,6 +158,11 @@ const registrationSchema = z
       .coerce
       .number()
       .min(18, 'Maximal age must be at least 18'),
+    bio: z
+      .string()
+      .trim()
+      .min(10, 'Bio must be at least 10 characters long')
+      .max(500, 'Bio cannot exceed 500 characters'),
   })
   .refine((data) => data.age_min <= data.age_max, {
     message: 'Your minimal preferred age should be lower than the maximal!',
