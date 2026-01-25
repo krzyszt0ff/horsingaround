@@ -17,6 +17,11 @@ import ChatView from '@/views/ChatView.vue'
 //
 import PhotoEditView from '@/views/PhotoEditView.vue';
 
+import AdminLayout from "@/components/layout/AdminLayout.vue";
+import AdminUsersView from "@/views/admin/AdminUsersView.vue";
+import AdminReportsView from "@/views/admin/AdminReportsView.vue";
+
+
 export const publicRoutes = ["/", "/login", "/signup/step1", "/signup/step2", "/signup/step3"];
 
 const router = createRouter({
@@ -43,6 +48,19 @@ const router = createRouter({
     // Generalnie /chat/:chatId nie bedzie potrzebne, ale ty jestes szefem i ty decydujesz o sprawach przod-koniec
     // OK!
     { path: '/chat/:chatId', name: 'chat', component: ChatView, meta: {requiresAuth: true}},
+
+
+     {
+      path: "/admin",
+      component: AdminLayout,
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [
+        { path: "", redirect: "/admin/users" },
+        { path: "users", name: "admin-users", component: AdminUsersView },
+        { path: "reports", name: "admin-reports", component: AdminReportsView },
+      ],
+    },
+
 
     // opcjonalnie: fallback
     { path: '/:pathMatch(.*)*', redirect: '/' }
@@ -73,6 +91,9 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth && !store.user) {
     return next("/login"); // nie zalogowany → przekieruj
   }
+  if (to.meta.requiresAdmin && store.user?.role !== "Admin") {
+  return next("/app");
+}
 
   next();
 });

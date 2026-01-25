@@ -46,34 +46,79 @@ try {
   }
 };
 //funckja pobiera liste wszystkich uzytkownkow z bazy danych i zwraca pola email role a jesli jest problem to jest problem i wywala blad 500
-export async function listUsers(req, res){
-try{
+export async function listUsers(req, res) {
+  try {
+    const includeDeleted = req.query.includeDeleted === "true";
 
-    const users=await UserCredentials.find({},"email role");
-     res.status(200).json(users);
+    const filter = includeDeleted
+      ? {}
+      : { isDeleted: { $ne: true } };
+
+    const users = await UserCredentials
+      .find(filter)
+      .select("email role isDeleted"); // ✅ żeby Vue widziało status
+
+    res.status(200).json(users);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-
-
 };
 
-export async function changeUserRole(req, res){
- try {
+
+
+
+export async function changeUserRole(req, res) {
+  try {
     const { role } = req.body;
 
     const user = await UserCredentials.findByIdAndUpdate(
       req.params.id,
       { role },
       { new: true }
-    );
+    ).select("email role isDeleted"); // ✅ bez password_hash
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
     res.status(200).json(user);
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
+}
+;
+export async function softDeleteUser(req, res) {
+  try {
+    const userId = req.params.id;
 
+    const user = await UserCredentials.findByIdAndUpdate(
+      userId,
+      {
+        isDeleted: true
+      },
+      { new: true }
+    ).select("email role isDeleted");
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    return res.status(200).json({ success: true, message: "User soft-deleted", user });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export async function restoreUser(req, res) {
+  try {
+    const userId = req.params.id;
+
+    const user = await UserCredentials.findByIdAndUpdate(
+      userId,
+      { isDeleted: false},
+      { new: true }
+    ).select("email role isDeleted");
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    return res.status(200).json({ success: true, message: "User restored", user });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
 };
