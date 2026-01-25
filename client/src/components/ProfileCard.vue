@@ -39,16 +39,29 @@
         <div class="description-wrapper" :class="{ open: isExpanded }">
             <div class="description-inner">
                 <p class="desc">{{ user.bio }}</p>
+                <div class="report-wrapper">
+                  <button title="Report user" @click.stop="showReportModal = true">
+                    <FontAwesomeIcon icon="flag" />
+                  </button>
+                </div>
             </div>
         </div>
-
       </div>
-    </div> 
+    <div v-if="showReportModal" class="modal-backdrop">
+      <ReportUserModal
+        :userId="user.user_id"
+        @close="showReportModal = false"
+        @success="console.log('report sent')"
+      />
+    </div>
+  </div> 
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { SERVER_BASE_URL } from '@/config/env'
+import ReportUserModal from '@/components/ReportUserModal.vue';
+import { faFlag } from '@fortawesome/free-solid-svg-icons'
 
 const props = defineProps({
   user: {
@@ -56,6 +69,9 @@ const props = defineProps({
     required: true
   }
 })
+
+const showReportModal = ref(false);
+const user = props.user;
 
 const currentImageIndex = ref(0)
 const isExpanded = ref(false)
@@ -226,6 +242,33 @@ function toggleInfo() {
   }
 }
 
+.report-wrapper{
+  width: 100%;
+  display: flex;
+  justify-content: end;
+}
+
+.report-wrapper button{
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #aaa;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.report-wrapper button:hover{
+  color: #a94e74;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
 h3{
   color: #555;
 }

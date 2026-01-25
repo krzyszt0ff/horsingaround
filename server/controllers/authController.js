@@ -98,6 +98,9 @@ export async function login(req, res) {
     if (!user) {
         return res.status(401).json({ success: false, error: "Invalid email or password"});
     }
+     if (user.isDeleted) {
+    return res.status(403).json({ success: false, error: "Account has been removed" });
+  }
 
     const valid = await bcrypt.compare(password, user.password_hash);
 
