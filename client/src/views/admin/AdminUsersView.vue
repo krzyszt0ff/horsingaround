@@ -106,7 +106,7 @@ const changeRole = async (u) => {
   error.value = "";
   try {
     await axios.patch(
-      `${ADMIN_BASE}/users/${u._id}/role`,
+      `${ADMIN_BASE}/users/${u._id}`,
       { role: u.role },
       { withCredentials: true }
     );

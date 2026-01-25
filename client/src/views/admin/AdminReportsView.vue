@@ -86,7 +86,7 @@ const changeStatus = async (r) => {
   error.value = "";
   try {
     await axios.patch(
-      `${ADMIN_BASE}/reports/${r._id}/status`,
+      `${ADMIN_BASE}/reports/${r._id}`,
       { status: r.status },
       { withCredentials: true }
     );
