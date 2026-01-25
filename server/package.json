@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch app"
+    "dev": "node --watch app",
+    "start": "node app"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
