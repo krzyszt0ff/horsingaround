@@ -1,8 +1,10 @@
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
-import { JWT_SECRET } from "../middleware/authMiddleware.js";
+import "dotenv/config";
 import { Match } from "../models/Match.js";
 import { Message } from "../models/Message.js";
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export default function setupSocket(io) { // Funkcja inicjalizcyjna
 

@@ -23,6 +23,10 @@
     display: none;
     justify-content: space-between;
     align-items: center;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    touch-action: pan-y;
+    touch-action: pan-x;
     }
 
     .settings-btn {

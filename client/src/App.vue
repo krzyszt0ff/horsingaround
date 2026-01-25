@@ -11,13 +11,14 @@
   import { publicRoutes } from './router/index'
   import { useUserStore } from '@/stores/user';
   import { useChatStore } from '@/stores/chatStore';
+  import { SERVER_BASE_URL } from "@/config/env";
   import AppLayout from './components/layout/AppLayout.vue';
 
   const route = useRoute()
   const userStore = useUserStore();
   const chatStore = useChatStore();
 
-  const API_URL = 'http://localhost:3000';
+  const API_URL = SERVER_BASE_URL;
 
   const UPDATE_INTERVAL = 30000 // to 5 minut w ms
   let locationUpdateInterval = null;

@@ -4,10 +4,6 @@
       <h2>Ładowanie...</h2>
     </div>
 
-    <div v-else-if="users.length === 0" class="no-users">
-      Brak nowych użytkowników do pokazania 
-    </div>
-
     <div v-if="!endOfUsers" class="card-stack">
       <ProfileCard
         v-for="(user, index) in visibleCards"
@@ -31,17 +27,29 @@
     <div v-if="endOfUsers" class="no-users">
        To już wszyscy użytkownicy w Twojej okolicy.
     </div>
+
+    <div v-else-if="users.length === 0" class="no-users">
+      Brak nowych użytkowników do pokazania 
+    </div>
+    <div class="horse" ref="horseGif">
+      <img :src="matchPngUrl">
+      <img :src=horseGifUrl>
+    </div>
   </main>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useUserStore } from '@/stores/user';
 import ProfileCard from '@/components/ProfileCard.vue';
 import { useTemplateRef } from 'vue';
 import { useElementSize, useMouseInElement } from '@vueuse/core';
 import { useClamp, useProjection } from '@vueuse/math';
 import { SERVER_BASE_URL } from "@/config/env";
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { sessionFilters } from '@/stores/filters'; 
+import matchAudioUrl from '@/assets/match.mp3';  
+import horseGifUrl from '@/assets/horse.gif';
+import matchPngUrl from '@/assets/match.png'
 
 const store = useUserStore();
 const users = ref([]);
@@ -52,6 +60,22 @@ const endOfUsers = ref(false);
 const visibleCards = computed(() =>
   users.value.slice(currentIndex.value, currentIndex.value + 3)
 )
+
+const audio = new Audio(matchAudioUrl)
+
+const horseGif = ref(null);
+
+function startAnimation() {
+  const el = horseGif.value;
+  if (!el) return;
+
+  el.classList.remove('animate');
+  void el.offsetWidth;
+  el.classList.add('animate');
+  el.addEventListener('animationend', () => {
+  el.classList.remove('animate');
+  });
+}
 
 const currentImageIndex = ref(0);
 const isExpanded = ref(false);
@@ -117,7 +141,45 @@ function handleTouchEnd() {
   swipe();
 }
 
+const fetchUsers = async () => {
+  loading.value = true;
+  try {
+    let url = `${SERVER_BASE_URL}/api/users?page=1`;
+    
+    if (sessionFilters.isActive) {
+      if (sessionFilters.gender !== 'all') {
+        url += `&gender=${sessionFilters.gender}`;
+      }
+      url += `&minAge=${sessionFilters.ageRange[0]}`;
+      url += `&maxAge=${sessionFilters.ageRange[1]}`;
+      url += `&distance=${sessionFilters.distance}`;
+    }
+
+    const res = await fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    const data = await res.json();
+    
+    if (data.success) {
+      users.value = data.data.filter(u => u.user_id !== store.user.userId);
+      currentIndex.value = 0; 
+      endOfUsers.value = users.value.length === 0;
+    }
+  } catch (err) {
+    console.error('Błąd pobierania użytkowników:', err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+watch(sessionFilters, () => {
+  fetchUsers();
+}, { deep: true });
+
 onMounted(async () => {
+  await fetchUsers();
   try {
     const res = await fetch(`${SERVER_BASE_URL}/api/users?page=1`, {
       method: 'GET',
@@ -159,7 +221,10 @@ async function like() {
       method: 'POST', credentials: 'include'
   });
   const data = await res.json();
-  if (data.match_created) alert('🔥 MATCH!');
+  if (data.match_created) {
+    audio.play()
+    startAnimation()
+  }
   nextCard();
 }
 
@@ -182,6 +247,7 @@ function swipe() {
     }
   }
 }
+
 </script>
 
 <style scoped>
@@ -254,5 +320,28 @@ function swipe() {
   .card-stack{
     padding-top: 4rem;
   }
+}
+
+.horse{
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  z-index: 99;
+  left: -100vw;
+}
+
+.horse.animate {
+  animation: fly-across 2s linear forwards;
+}
+
+@keyframes fly-across {
+  0% { left: -50vw; }
+  100% { left: 100vw; }
+}
+
+.horse img{
+  object-fit: contain;
+  width: auto;
+  height: auto;
 }
 </style>

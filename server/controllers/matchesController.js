@@ -1,5 +1,6 @@
 import { Match } from "../models/Match.js";
 import { Message } from "../models/Message.js";
+import { Like } from "../models/Like.js";
 import { UserData } from "../models/UserData.js";
 import mongoose from 'mongoose';
 
@@ -59,27 +60,45 @@ export async function listMatches(req,res){
     }
 };
 
-export async function deleteMatch(req,res){
+export async function deleteMatch(req, res) {
     try {
-        const ids = req.body.ids;             // wyciągamy z JSONa tablicę z id, które mamy usunąć
-        const matches = await Match.find({    // szukamy matchy do usunięcia
-            _id: { $in: ids }
-        })
-        const picked_matches = matches.map(m => m._id);                                   // Tablica samych id matchy, ktore mamy usunac (mapujemy same id)
-        const deleted_matches = await Match.deleteMany({ _id: { $in: picked_matches } }); // Usuwanie obiektów + counter
-        const skipped_matches = ids.filter(id => !picked_matches.includes(id));           // Wybrane id, które nie zostały usunięte (nie było ich bo nie było ich w bazie), szczerze nie wiem po co to jak terz na to ptrze, chyba mozna usunac
+        const ids = req.body.ids; 
+        const userId = req.user.userId;
+        const matchesToDelete = await Match.find({ _id: { $in: ids } });
 
-        return res.status(200).json({ 
-            success: true,
-            deleted: deleted_matches,
-            not_deleted: skipped_matches
-        });
+        if (!matchesToDelete.length) {
+            return res.status(404).json({ success: false, error: "Match not found" });
+        }
+        for (const match of matchesToDelete) {
+            const { user_A, user_B } = match;
+            await Like.deleteMany({
+                $or: [
+                    { from_user: user_A, to_user: user_B },
+                    { from_user: user_B, to_user: user_A }
+                ]
+            });
+            await Message.deleteMany({ match_id: match._id });
+            await Match.deleteOne({ _id: match._id });
+        }
+        const io = req.app.get('io');
+        if (io) {
+            matchesToDelete.forEach(match => {
+                const otherUserId = match.user_A.toString() === userId 
+                    ? match.user_B 
+                    : match.user_A;
+                io.to(`user_${otherUserId}`).emit('match_deleted', { 
+                    match_id: match._id.toString() 
+                });
+            });
+        }
+
+        return res.status(200).json({ success: true });
 
     } catch (err) {
-        console.error(err);
+        console.error("Błąd podczas usuwania pary:", err);
         return res.status(500).json({
             success: false,
-            error: "Filed to delete chosen matches."
+            error: "Failed to delete chosen matches and related data."
         });
     }
 };

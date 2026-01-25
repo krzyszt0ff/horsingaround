@@ -2,9 +2,14 @@
   <div class="chat-container">
     <header class="window-header">
        <div class="user-details" v-if="activeChat">
+        <button class="back-btn" @click="$emit('back')">
+          <FontAwesomeIcon icon="chevron-left" class="icon"/>
+        </button>
          <img 
            :src="getImageUrl(activeChat.other_user.images_paths[0])" 
            class="header-avatar" 
+           @click="$emit('open-profile')"
+            style="cursor: pointer"
          />
          <div class="active-chat-info">
            <h3>{{ activeChat.other_user.name }}</h3>
@@ -12,6 +17,9 @@
            <span v-else class="status-inactive">Offline</span>
          </div>
        </div>
+       <button v-if="activeChat" class="delete-match-btn" @click="handleDeleteClick" title="Delete Match">
+        <span>🗑</span>
+      </button>
     </header>
   
     <div class="messages-area" ref="messagesContainer">
@@ -31,10 +39,17 @@
       <input 
         v-model="newMessage"
         @keyup.enter="handleSend"
-        placeholder="Napisz wiadomość..." 
+        placeholder="Write a message..." 
       />
       <button @click="handleSend" :disabled="!newMessage.trim()">Send</button>
     </div>
+    <DeleteConfirmation
+      :show="showDeleteModal"
+      title="Delete match"
+      :message="`Are you sure you want to delete the match with ${activeChat?.other_user?.name}?\nAll messages will be permanently deleted.`"
+      @close="showDeleteModal = false"
+      @confirm="executeDeleteMatch"
+    />
   </div>
 </template>
 
@@ -43,18 +58,20 @@
   import { ref, computed, nextTick, watch } from 'vue';
   import { useChatStore, API_URL } from '@/stores/chatStore';
   import ChatMessage from './ChatMessage.vue';
+  import { SERVER_BASE_URL } from "@/config/env";
+  import DeleteConfirmation from './DeleteConfirmation.vue';
 
   const store = useChatStore();         // Połączenie ze storem
-
+  const isDeleting = ref(false);      // Zmienna reaktywna do stanu usuwania
   const newMessage = ref('');           // Zmienna reaktywna do inputu
   const messagesContainer = ref(null);  // Zmienna reaktywna - uchwyt do diva z wiadomoścami
   const activeMessageId = ref(null);    // Zmienna reaktywna - przechowuje klikniętą wiadomość
-
+  const showDeleteModal = ref(false); // Sterowanie widocznością popupu
   // Dane obliczeniowe (zmieniające się)
   const activeChat = computed(() => store.activeChat);  // Aktualnie otwarta rozmowa
   const messages = computed(() => store.messages);      // Lista wiadomości pobrana ze store
   const isOnline = computed(() => store.onlineUsers.has(activeChat.value?.other_user?.user_id));  // Flag aktywności naszego wybranego rozmówcy
-
+  const emit = defineEmits(['back', 'open-profile']);
   function getImageUrl(path) {
     if (!path) return 'https://media.os.fressnapf.com/cms/2022/09/trakehner_portrait.jpg?t=seoimg_703';
     return path.startsWith('http') ? path : `${API_URL}${path}`;
@@ -100,6 +117,29 @@
     newMessage.value = '';                // Czyści input i zmienną
   }
 
+function handleDeleteClick() {
+  showDeleteModal.value = true;
+}
+
+async function executeDeleteMatch() {
+  if (!activeChat.value) return;
+  showDeleteModal.value = false; // Zamknij popup przed startem
+
+  try {
+    isDeleting.value = true;
+    const success = await store.deleteMatch(activeChat.value.match_id);
+    
+    if (success) {
+      emit('back'); // Powrót do listy czatów
+    } else {
+      console.error("Błąd: Serwer nie potwierdził usunięcia");
+    }
+  } catch (err) {
+    console.error("Szczegóły błędu przy usuwaniu:", err);
+  } finally {
+    isDeleting.value = false;
+  }
+}
 </script>
 
 <style scoped>
@@ -109,6 +149,7 @@
     height: 100%; 
     max-height: 100vh;
     background: #fff; 
+    touch-action: pan-y;
   }
 
   .window-header {
@@ -116,6 +157,7 @@
     border-bottom: 1px solid #eee;
     display: flex;
     align-items: center;
+    justify-content: space-between;
   }
 
   .user-details {
@@ -180,4 +222,46 @@
   .active-chat-info{
     color: #666;
   }
+
+  .back-btn{
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: gray;
+  }
+
+  @media (width <= 900px) {
+  .back-btn {
+    display: block;
+  }
+  }
+  @media (width <= 650px) {
+  .chat-container{
+    max-height: calc(100dvh - 9.5rem);
+  }
+  }
+.delete-match-btn {
+  background: none;
+  border: none;
+  color: #da6666;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.delete-match-btn:hover {
+  background: #fff0f0;
+  color: #ff4d4d;
+  transform: scale(1.1);
+}
+
+@media (width <= 900px) {
+  .back-btn { display: block; }
+}
+@media (width <= 650px) {
+  .chat-container { max-height: calc(100dvh - 9.5rem); }
+}
 </style>

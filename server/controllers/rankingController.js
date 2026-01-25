@@ -45,7 +45,10 @@ export async function statLikes(req,res){
                     _id: 0,
                     user_info: {
                         name: 1,
-                        _id: 1
+                        _id: 1,
+                        bio: 1,           
+                        images_paths: 1,  
+                        date_of_birth: 1
                     },
                     likesCounter: 1
                 }
@@ -114,8 +117,9 @@ export async function statMatches(req,res){
                     user_info: {
                         name: 1,
                         _id: 1,
-                        age: 1, 
-                        gender: 1
+                        bio: 1,           
+                        images_paths: 1,  
+                        date_of_birth: 1
                     },
                     matchesCounter: 1
                 }

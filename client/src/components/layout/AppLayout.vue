@@ -22,6 +22,8 @@
         display: grid;
         grid-template-columns: 300px 1fr;
         background: var(--bg-gradient);
+        max-height: 100vh;
+        overflow-y: auto;
     }
     .content {
         width: 100%;
@@ -32,6 +34,8 @@
         align-items: center;
         justify-content: center;
         font-family: 'Poppins', sans-serif;
+        touch-action: pan-y;
+        touch-action: pan-x;
     }
 
     /*
@@ -47,7 +51,6 @@
         .app-layout{
             grid-template-columns: 1fr;
             grid-template-rows: 4rem 1fr 5.5rem;
-            max-height: 100vh;
         }
         .content{
             grid-column: 1;

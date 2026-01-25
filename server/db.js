@@ -1,15 +1,17 @@
 import mongoose from "mongoose";
 import "dotenv/config";
 
-//mongoose.connect(process.env.MONGODB_URI)
- // .then(() => console.log("Connected to the local database"))
- // .catch(err => console.error("Connection error:", err));
+const uri = process.env.MONGODB_URI;
 
-//export default mongoose;
 
-// Nie działało mi coś 
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/JSDB";
+async function run() {
+  try {
+    await mongoose.connect(uri);
+    console.log("You successfully connected to MongoDB!");
+  } catch (err) {  
+    console.error("Connection error:", err);
 
-mongoose.connect(MONGO_URI)
-.then(() => console.log("MongoDB connected"))
-.catch(err => console.error("MongoDB connection error:", err));
+  }
+}
+run();
+

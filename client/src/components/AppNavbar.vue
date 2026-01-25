@@ -53,6 +53,8 @@
     grid-row: 3;
     margin-top: auto;
     padding: 1rem 1rem 2rem 1rem;
+    position: fixed;
+    bottom: 0;
     width: 100%;
     display: none;
     justify-content: space-around;
@@ -60,6 +62,8 @@
     background: white;
     color: #a94e74;
     z-index: 999;
+    touch-action: pan-y;
+    touch-action: pan-x;
     }
 
     @media (width <= 650px) {

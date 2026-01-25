@@ -48,6 +48,10 @@ export async function listUsers(req, res) {
   let page = parseInt(req.query.page, 10);
   if (isNaN(page) || page < 1) page = 1;
 
+  const deletedIds = await UserCredentials
+  .find({ isDeleted: true })
+  .distinct("_id");
+
   const page_size = 10;
   const user = new mongoose.Types.ObjectId(req.user.userId);
 
@@ -56,12 +60,18 @@ export async function listUsers(req, res) {
   if (userProfile === null) {
     return res.status(404).json({ success: false, error: "User's profile cannot be found" });
   }
+  const genderFilter = req.query.gender 
+    ? [req.query.gender]
+    : userProfile.preferred_gender;
+  const minAge = parseInt(req.query.minAge) || userProfile.preferred_min_age;
+  const maxAge = parseInt(req.query.maxAge) || userProfile.preferred_max_age;
+  const distance = parseInt(req.query.distance) || userProfile.preferred_distance;
 
   const { gender, location, preferred_gender, preferred_min_age, preferred_max_age, preferred_distance } = userProfile;
 
   const today = new Date();
-  const maxDate = new Date(today.getFullYear() - preferred_min_age, today.getMonth(), today.getDate());
-  const minDate = new Date(today.getFullYear() - preferred_max_age, today.getMonth(), today.getDate());
+  const maxDate = new Date(today.getFullYear() - minAge, today.getMonth(), today.getDate());
+  const minDate = new Date(today.getFullYear() - maxAge, today.getMonth(), today.getDate());
 
   const preferred_distance_m = preferred_distance * 1000;
 //  maxDistance: preferred_distance_m, zmieniam na chwile
@@ -76,10 +86,10 @@ export async function listUsers(req, res) {
         $geoNear: {
           near: { type: "Point", coordinates: location.coordinates },
           distanceField: "distance",
-          maxDistance: preferred_distance_m,
+          maxDistance: distance * 1000,
           query: {
-            user_id: { $ne: user },
-            gender: { $in: preferred_gender },
+            user_id: { $ne: user,$nin: deletedIds },
+            gender: { $in: genderFilter },
             preferred_gender: gender,
             date_of_birth: { $gte: minDate, $lte: maxDate }
             
@@ -186,20 +196,34 @@ export async function showUser(req, res) {
 
 //Pobieranie własnego profilu
 export async function showMyProfile(req, res) {
+  try {
+    const id = req.user.userId;
 
-  const id = req.user.userId;
+    const userDoc = await UserData.findOne({ user_id: id });
 
-  const user = await UserData.findOne({ user_id: id });
+    if (!userDoc) {
+      return res.status(404).json({ success: false, error: "User profile not found" });
+    }
 
-  if (!user) {
-    return res.status(404).json({ success: false, error: "User profile not found" });
+    // ✅ pobierz credentials (email, role, isDeleted)
+    const creds = await UserCredentials.findById(id).select("email role isDeleted");
+
+    // ✅ zamień na zwykły obiekt i doklej role/email, ale NIE zmieniaj nazwy "user"
+    const user = userDoc.toObject();
+    if (creds) {
+      user.email = creds.email;
+      user.role = creds.role;
+      user.isDeleted = creds.isDeleted;
+    }
+
+    const age = calculateAge(user.date_of_birth);
+
+    return res.json({ success: true, data: { user: user, age: age } });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
   }
-
-  const age = calculateAge(user.date_of_birth);
-
-  res.json({ success: true, data: { user: user, age: age } });
-
 }
+
 
 //Tworzenie danych profilu
 export async function addUser(req, res) {
@@ -401,11 +425,11 @@ export async function reportUser(req, res) {
   const now = new Date();
 
   const newReport = {
-    reporter_id: id,
-    reported_user_id: otherId,
-    created_at: now,
-    text_content: textContent,
-    inspected: false
+     reporter_id: id,                    // zamiast reporter_id
+  reported_user_id: otherId,       // zostaje
+  created_at: now,
+  text_content: textContent,
+  inspected: false
   };
 
   try {

@@ -12,6 +12,10 @@ export const useChatStore = defineStore('chat', {
     messages: [],             // Wiadomości obecnie otwartego chatu
     onlineUsers: new Set(),   // Lista aktywnych użytkowników
     myUserId: null,           // ID użytkownika
+    matchDeletedInfo: {
+    show: false,
+    partnerName: ''
+    },
   }),
 
   getters: {
@@ -35,13 +39,26 @@ export const useChatStore = defineStore('chat', {
         this.onlineUsers = new Set(users);
       });
 
-      // Obsługa aktywności użytkowników (gdy wchodzą/wychodzą)
       socketService.on('user_online', (user) => this.onlineUsers.add(user));
       socketService.on('user_offline', (user) => this.onlineUsers.delete(user));
-
-      // Odbieranie i wysyłanie wiadomości
       socketService.on('new_message', (msg) => this.handleIncomingMessage(msg));
       socketService.on('message_sent', (msg) => this.handleIncomingMessage(msg));
+      socketService.on('match_deleted', (data) => {
+          const chatToDelete = this.chats.find(c => c.match_id === data.match_id);
+          const partnerName = chatToDelete?.other_user?.name || "Someone";
+          this.chats = this.chats.filter(c => c.match_id !== data.match_id);
+          if (this.activeChat && this.activeChat.match_id === data.match_id) {
+              this.activeChat = null;
+              this.messages = [];
+              this.matchDeletedInfo = {
+                  show: true,
+                  partnerName: partnerName
+              };
+          }
+          if (this.previewedUser && this.previewedUser.match_id === data.match_id) {
+              this.previewedUser = null;
+    }
+});
     },
 
     // Obsługa wiadomości (listy chatów)
@@ -99,7 +116,7 @@ export const useChatStore = defineStore('chat', {
             console.error("Błąd pobierania wiadomości:", err);
         }
     },
-
+    
     // Obsługa wysyłania wiadomości
     sendMessage(text) {
       const currentMatchId = this.activeChat.match_id || this.activeChat._id;
@@ -110,6 +127,29 @@ export const useChatStore = defineStore('chat', {
         matchId: currentMatchId,
         text: text
       });
+    },
+async deleteMatch(matchId) {
+  try {
+    const res = await axios.delete(`${API_URL}/api/matches`, {
+      data: { ids: [matchId] },
+      withCredentials: true
+    });
+    console.log("Serwer odpowiedział:", res.data);
+    if (res.data.success) {
+      this.chats = this.chats.filter(c => c.match_id !== matchId);
+      this.activeChat = null;
+      return true;
     }
+    return false;
+  } catch (err) {
+    // KLUCZOWE: Wypisz błąd w konsoli!
+    console.error("Pełny błąd axios:", err);
+    if (err.response) {
+       console.error("Status błędu:", err.response.status);
+       console.error("Dane błędu:", err.response.data);
+    }
+    return false;
+  }
+}
   }
 });

@@ -32,26 +32,43 @@
         {{ error }}
       </div>
 
-      <div v-else class="list-container">
-        <ul class="ranking-list">
-          <li v-for="(user, index) in rankingList" :key="user.id" class="ranking-item">
-            
-            <div class="left-content">
-              <div class="rank-icon-wrapper">
-                <img :src="getRankAsset(index)" :alt="`Rank ${index + 1}`" class="rank-img" />
-              </div>
-              
-              <span class="user-name">{{ user.name }}</span>
-            </div>
-
-            <div class="right-content">
-              <span class="heart">{{ activeTab === 'likes' ? '♥' : '🔥' }}</span>
-              <span class="votes">{{ user.count }}</span>
-            </div>
-
-          </li>
-        </ul>
+<div v-else class="list-container">
+  <ul class="ranking-list">
+    <li 
+      v-for="(user, index) in rankingList" 
+      :key="user.id" 
+      class="ranking-item"
+      @click="openProfile(user)"
+      style="cursor: pointer;"
+    >
+      <div class="left-content">
+        <div class="rank-icon-wrapper">
+          <img :src="getRankAsset(index)" :alt="`Rank ${index + 1}`" class="rank-img" />
+        </div>
+        <span class="user-name">{{ user?.name || 'Użytkownik' }}</span>
       </div>
+
+      <div class="right-content">
+        <span class="heart">{{ activeTab === 'likes' ? '♥' : '🔥' }}</span>
+        <span class="votes">{{ user.count }}</span>
+      </div>
+    </li>
+  </ul>
+    <Transition name="fade">
+  <div v-if="isProfileOpen" class="profile-modal-overlay">
+    
+    <div class="modal-backdrop" @click="closeProfile"></div>
+
+    <div class="profile-modal-content">
+      <ProfileCard 
+        v-if="selectedUserForPreview" 
+        :user="selectedUserForPreview" 
+      />
+    </div>
+
+  </div>
+</Transition>
+</div>
 
       <FilterPopup
         :is-open="isModalOpen"
@@ -68,6 +85,7 @@
 <script setup>
   import { ref, onMounted, watch } from 'vue';
   import FilterPopup from '../components/stats/FilterPopup.vue';
+  import ProfileCard from '../components/ProfileCard.vue';
   import { SERVER_BASE_URL } from "@/config/env";
 
   const rankingList = ref([]);
@@ -76,6 +94,8 @@
   const activeTab = ref('likes');
   const BASE_API_URL = SERVER_BASE_URL;
 
+  const selectedUserForPreview = ref(null);
+  const isProfileOpen = ref(false);
   const isModalOpen = ref(false);
   const selectedGender = ref('all');
   const selectedAgeRange = ref([18, 99]);
@@ -104,14 +124,25 @@
       }
 
       const json = await response.json();
+      const calculateAge = (birthday) => {
+          const ageDifMs = Date.now() - new Date(birthday).getTime();
+          const ageDate = new Date(ageDifMs);
+          return Math.abs(ageDate.getUTCFullYear() - 1970);
+        };
 
-      if (json.success) {
-        rankingList.value = json.data.map(item => ({
-          id: item.user_info._id,
-          name: item.user_info.name || 'Użytkownik',
-          count: item.likesCounter || item.matchesCounter || 0
-        }));
-      } else {
+    if (json.success && Array.isArray(json.data)) {
+      rankingList.value = json.data
+      .filter(item => item && item.user_info)
+      .map(item => ({
+      id: item.user_info._id,
+      name: item.user_info.name || 'Użytkownik',
+      age: item.user_info.age || '?', 
+      bio: item.user_info.bio || 'Brak opisu',
+      images_paths: item.user_info.images_paths || [], 
+      count: item.likesCounter || item.matchesCounter || 0,
+      age: item.user_info.date_of_birth ? calculateAge(item.user_info.date_of_birth) : '?'
+    }));
+} else {
         error.value = "Nie udało się pobrać danych.";
       }
       
@@ -124,6 +155,15 @@
     }
   };
 
+  const openProfile = (user) => {
+    selectedUserForPreview.value = user;
+    isProfileOpen.value = true; 
+  };
+
+  const closeProfile = () => {
+    isProfileOpen.value = false;
+    selectedUserForPreview.value = null;
+  };
   const switchTab = (tabName) => {
     if (activeTab.value === tabName) return;
     activeTab.value = tabName;
@@ -336,4 +376,65 @@
   border-color: #e67da8;
   color: #e67da8;
 }
+
+.profile-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: -1; 
+}
+
+.profile-modal-content {
+  position: relative;
+  z-index: 10000;
+  pointer-events: auto; 
+}
+:deep(.card) {
+  position: relative !important;
+  top: unset !important;
+  left: unset !important;
+  margin: 0 auto;
+}
+
+.close-profile-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 1001;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #e67da8;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
 </style>

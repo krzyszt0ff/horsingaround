@@ -5,8 +5,7 @@
       Ładowanie profilu...
     </div>
 
-    <div v-else class="card">
-      
+    <div v-else class="profile-container">
       <div class="image-container">
         <div class="photo-bars">
             <div 
@@ -27,22 +26,22 @@
         <div class="click-zone right" @click.stop="nextPhoto"></div>
       </div>
 
-      <div class="bottom-panel">
-        
-        <div class="panel-header" @click.stop="toggleInfo">
-            <div class="header-content">
-                <h2>{{ store.user.name }}, {{ store.age }}</h2>
-            </div>
-            
-            <button class="toggle-btn">
-                <FontAwesomeIcon :icon="isExpanded ? 'chevron-down' : 'chevron-up'" />
-            </button>
+      <div class="description-panel">
+        <div class="panel-header">
+          <div class="header-content">
+            <h2>{{ store.user.name }}, {{ store.age }}</h2>
+          </div>
         </div>
 
-        <div class="description-wrapper" :class="{ open: isExpanded }">
-            <div class="description-inner">
-                <p class="desc">{{ store.user.bio }}</p>
-            </div>
+        <div class="description-wrapper">
+          <h3>Gender</h3>
+          <p class="desc">{{ store.user.gender }}</p>
+          <h3>Interested in:</h3>
+          <p class="desc">{{ store.user.preferred_gender?.join(', ') }}</p>
+          <h3>Description</h3>
+          <p class="desc">{{ store.user.bio }}</p>
+          <h3>Birth Date</h3>
+          <p class="desc">{{ formattedDate }}</p>
         </div>
 
         <div class="panel-buttons">
@@ -61,7 +60,7 @@
 
 <script setup>
 import { useUserStore } from '@/stores/user';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { SERVER_BASE_URL } from "@/config/env";
 
@@ -69,7 +68,6 @@ const router = useRouter();
 const store = useUserStore();
 
 const currentImageIndex = ref(0);
-const isExpanded = ref(false);
 
 onMounted(async () => {
   await store.loadUser();
@@ -87,10 +85,6 @@ function prevPhoto() {
   }
 }
 
-function toggleInfo() {
-  isExpanded.value = !isExpanded.value;
-}
-
 async function logout() {
   try {
     await fetch(`${SERVER_BASE_URL}/api/auth/logout`, {
@@ -98,12 +92,21 @@ async function logout() {
       credentials: "include"
     });
     store.logout();
-    router.push('/');
+    router.push('/').then(() => {
+      window.location.reload()
+    })
     //do ogarniecia zeby odswiezalo
   } catch (err) {
     console.error('Logout failed', err);
   }
 }
+
+const formattedDate = computed(() => {
+  if (!store.user?.date_of_birth) return ''
+  return new Date(store.user.date_of_birth)
+    .toLocaleDateString('pl-PL')
+})
+
 </script>
 
 <style scoped>
@@ -111,7 +114,15 @@ async function logout() {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 80vh; 
+  width: 100%;
+  height: 100%;
+}
+
+.profile-container {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  width: 100%;
+  height: 100%;
 }
 
 .card {
@@ -121,26 +132,29 @@ async function logout() {
   border-radius: 20px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   overflow: hidden;
-  position: relative;
   display: flex;
   flex-direction: column;
 }
 
 .image-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
+  grid-column: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: #222;
+  border-radius: 24px;
+  margin: 2rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .profile-photo-bg {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   display: block;
+  border-radius: 24px;
 }
 
 .photo-bars {
@@ -173,17 +187,17 @@ async function logout() {
 .click-zone.left { left: 0; }
 .click-zone.right { right: 0; }
 
-.bottom-panel {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
+.description-panel {
+  grid-column: 2;
   background: white;
   z-index: 20;
-  border-radius: 24px 24px 0 0;
+  border-radius: 24px;
   box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  margin: 2rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .panel-header {
@@ -191,26 +205,17 @@ async function logout() {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.5rem 0.5rem 1.5rem;
-  cursor: pointer;
 }
 
 .header-content h2 {
-  color: #a94e74;
   font-size: 1.6rem;
   margin: 0;
   font-weight: 700;
 }
 
-.toggle-btn {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  color: #aaa;
-  cursor: pointer;
-  padding: 5px;
-  transition: 0.3s;
+h1, h2, h3, h4, h5, h6 {
+  color: #a94e74;
 }
-.toggle-btn:hover { color: #a94e74; }
 
 .description-wrapper {
   display: grid;
@@ -221,10 +226,6 @@ async function logout() {
 
 .description-wrapper.open {
   grid-template-rows: 1fr;
-}
-
-.description-inner {
-  overflow: hidden;
 }
 
 .desc {
@@ -242,8 +243,6 @@ async function logout() {
   justify-content: center;
   gap: 1rem;
   padding: 1rem 1.5rem 1.5rem 1.5rem;
-  background: white;
-  margin-top: auto; 
 }
 
 .edit-btn,
@@ -284,11 +283,19 @@ async function logout() {
     font-size: 1.2rem;
     color: #888;
 }
-@media (width <= 650px) {
-  .card {
-    height: 70vh;
-    width: 90vw;
-    max-width: 400px;
+@media (width <= 900px) {
+  .profile-page-container{
+    height: auto;
+  }
+  .profile-container{
+    grid-template-columns: 1fr;
+  }
+  .description-panel {
+    grid-column: 1;
+    margin-top: 0;
+  }
+  .image-container{
+    aspect-ratio: 3/4;
   }
 }
 </style>

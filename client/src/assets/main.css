@@ -4,6 +4,8 @@
   margin: 0 auto;
   padding: 2rem;
   font-weight: normal;
+  scrollbar-width: thin;
+  scrollbar-color: #e67da8 #fff;
 }
 
 a,
