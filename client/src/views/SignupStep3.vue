@@ -174,8 +174,14 @@ async function handleFinish() {
     });
 
     if (!userResponse.ok) {
-      const text = await userResponse.text();
-      console.log('BACKEND ERROR:', text);
+      await fetch(
+        `${SERVER_BASE_URL}/api/auth/credentials/${credentialData.userId}`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+        }
+      );
+
       errorMessage.value =
         'Could not create your profile. Please try again.';
       return;

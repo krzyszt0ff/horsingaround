@@ -28,6 +28,7 @@
         <div class="panel-header" @click.stop="toggleInfo">
             <div class="header-content">
                 <h2>{{ user.name }}, {{ user.age }}</h2>
+                <h3>{{ user.distance_km }}km away</h3>
             </div>
             
             <button class="toggle-btn">
@@ -223,5 +224,9 @@ function toggleInfo() {
     max-width: 400px;
     margin-bottom: 2rem;
   }
+}
+
+h3{
+  color: #555;
 }
 </style>

@@ -56,6 +56,32 @@ export async function register(req, res) {
     return res.status(200).json({success: true, userId: newUser._id});
 }
 
+// rollback credentials (gdy userData się nie zapisze)
+export async function deleteCredentials(req, res) {
+  const { userId } = req.params;
+
+  try {
+    const credential = await UserCredentials.findById(userId);
+
+    if (!credential) {
+      return res.status(404).json({
+        success: false,
+        error: "Credentials not found"
+      });
+    }
+
+    await UserCredentials.findByIdAndDelete(userId);
+
+    return res.status(204).send();
+  } catch (err) {
+    console.error("Delete credentials error:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to delete credentials"
+    });
+  }
+}
+
 // funkcja do logowania użytkownika
 export async function login(req, res) {
 
