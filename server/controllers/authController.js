@@ -87,8 +87,8 @@ export async function login(req, res) {
 
     res.cookie("token", token, {
         httpOnly: true,
-        secure: false, // do lokalnego hostingu!!! normalnie true
-        sameSite: "strict",
+        secure: true, // do lokalnego hostingu!!! normalnie true
+        sameSite: "none",
         maxAge: 1000 * 60 * 60 * 24
     });
 
