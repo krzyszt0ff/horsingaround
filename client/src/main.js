@@ -18,10 +18,11 @@ import {
   faX,
   faChevronUp,
   faChevronDown,
-  faChevronLeft
+  faChevronLeft,
+  faFlag
 } from '@fortawesome/free-solid-svg-icons'
 
-library.add(faHeart, faAward, faMessage, faUser, faSliders, faX, faChevronUp, faChevronDown, faChevronLeft)
+library.add(faHeart, faAward, faMessage, faUser, faSliders, faX, faChevronUp, faChevronDown, faChevronLeft, faFlag)
 
 const app = createApp(App)
 

@@ -192,6 +192,7 @@ h2 { margin: 0; color:#a94e74; }
   border-radius: 14px;
   padding: .8rem;
   margin-top: .8rem;
+  color: #555;
 }
 
 pre{ margin:0; white-space: pre-wrap; }
