@@ -52,7 +52,7 @@ export async function listUsers(req, res) {
   .find({ isDeleted: true })
   .distinct("_id");
 
-  const page_size = 10;
+  const page_size = 100;
   const user = new mongoose.Types.ObjectId(req.user.userId);
 
   const userProfile = await UserData.findOne({ user_id: user });
