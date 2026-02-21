@@ -6,7 +6,7 @@
           <FontAwesomeIcon icon="chevron-left" class="icon"/>
         </button>
          <img 
-           :src="getImageUrl(activeChat.other_user.images_paths[0])" 
+           :src="activeChat.other_user.images_paths[0].url" 
            class="header-avatar" 
            @click="$emit('open-profile')"
             style="cursor: pointer"
@@ -72,10 +72,7 @@
   const messages = computed(() => store.messages);      // Lista wiadomości pobrana ze store
   const isOnline = computed(() => store.onlineUsers.has(activeChat.value?.other_user?.user_id));  // Flag aktywności naszego wybranego rozmówcy
   const emit = defineEmits(['back', 'open-profile']);
-  function getImageUrl(path) {
-    if (!path) return 'https://media.os.fressnapf.com/cms/2022/09/trakehner_portrait.jpg?t=seoimg_703';
-    return path.startsWith('http') ? path : `${API_URL}${path}`;
-  }
+
 
   const scrollToBottom = () => {
     nextTick(() => {  // Zaczekaj z przewijaniem do nastnego ticku (żeby wiadomość najpier dodała się do listy (1 tick) i dodała się do dokumentu (2 tick))

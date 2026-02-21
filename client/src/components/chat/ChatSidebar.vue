@@ -19,7 +19,7 @@
       >
         <div class="avatar-wrapper" @click.stop="openProfile(chat.other_user)">
           <img
-            :src="getImageUrl(chat.other_user.images_paths[0])"
+            :src="chat.other_user.images_paths[0].url"
             class="avatar clickable-avatar"
             alt="Avatar"
           />
@@ -67,10 +67,7 @@ function openProfile(otherUser) {
   const id = otherUser.user_id || otherUser._id;
   emit('open-user-profile', id);
 }
-function getImageUrl(path) {
-  if (!path) return 'aabcabc'
-  return path.startsWith('http') ? path : `${API_URL}${path}`
-}
+
 
 function formatDate(dateStr) {
   if (!dateStr) return ''
