@@ -8,7 +8,6 @@ cloudinary.config({
     secure: true
 });
 
-console.log(cloudinary.config());
 
 export const uploadImage = async (imagePath) => {
 
@@ -28,19 +27,6 @@ export const uploadImage = async (imagePath) => {
 
 };
 
-export const getAssetInfo = async (publicId) => {
-    const options = {
-        colors: true
-    };
-
-    try {
-        const result = await cloudinary.api.resource(publicId, options);
-        console.log(result);
-        return result.colors;
-    } catch (error) {
-        console.error(error);
-    }
-}
 
 export async function deleteUploadedFiles(ids) {
   if (!ids || !Array.isArray(ids) || ids.length === 0) {

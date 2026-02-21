@@ -122,7 +122,7 @@ export async function login(req, res) {
         maxAge: 1000 * 60 * 60 * 24
     });
 
-    return res.status(200).json({success: true, token: token});
+    return res.status(200).json({success: true});
     
 }
 
