@@ -5,17 +5,8 @@
       <p class="desc">Add at least one photo to complete your profile</p>
 
       <div class="photo-grid">
-        <div
-          v-for="(photo, index) in photos"
-          :key="index"
-          class="photo-slot"
-          @click="uploadPhoto(index)"
-        >
-          <img
-            v-if="photoPreviews[index]"
-            :src="photoPreviews[index]"
-            alt="Uploaded"
-          />
+        <div v-for="(photo, index) in photos" :key="index" class="photo-slot" @click="uploadPhoto(index)">
+          <img v-if="photoPreviews[index]" :src="photoPreviews[index]" alt="Uploaded" />
           <span v-else>+</span>
         </div>
       </div>
@@ -28,20 +19,14 @@
         {{ errorMessage }}
       </p>
 
-      <button class="finish-btn" @click="handleFinish">Finish</button>
+      <button class="finish-btn" @click="handleFinish" :disabled="isSaving">{{ isSaving ? 'Saving...' : 'Finish' }}</button>
 
       <p class="back">
         <a @click.prevent="$router.push('/signup/step2')" href="#">← Back</a>
       </p>
 
       <!-- Ukryte pole pliku -->
-      <input
-        ref="fileInput"
-        type="file"
-        accept="image/*"
-        @change="handleFileChange"
-        style="display: none"
-      />
+      <input ref="fileInput" type="file" accept="image/*" @change="handleFileChange" style="display: none" />
     </div>
   </div>
 </template>
@@ -61,6 +46,7 @@ const photoPreviews = ref([null, null, null]);
 const activeIndex = ref(0);
 const fileInput = ref(null);
 
+const isSaving = ref(false);
 const photoError = ref('');
 const errorMessage = ref(''); // błąd ogólny (backend / rejestracja)
 
@@ -96,6 +82,7 @@ async function handleFinish() {
     photoError.value = 'Please upload at least one photo.';
     return;
   }
+  isSaving.value = true;
 
   // zapisujemy zdjęcia do store
   store.updateStep('step3', {
@@ -193,6 +180,8 @@ async function handleFinish() {
   } catch (error) {
     console.log(error);
     errorMessage.value = 'Unexpected error. Please try again later.';
+  } finally {
+    isSaving.value=false;
   }
 }
 </script>

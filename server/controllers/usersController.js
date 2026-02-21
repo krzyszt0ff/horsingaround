@@ -8,7 +8,9 @@ import mongoose from 'mongoose';
 import * as z from 'zod';
 import fs from 'fs';
 import path from "path";
+import cloudinary from "cloudinary";
 import { profileSchema } from "../schemas/profileSchema.js";
+import { uploadImage, deleteUploadedFiles } from "../cloudConfig.js";
 
 
 function calculateAge(birthDate) {
@@ -27,20 +29,7 @@ function calculateAge(birthDate) {
   return age;
 };
 
-async function deleteUploadedFiles(files) {
-  if (!files || !Array.isArray(files) || files.length === 0) {
-        return; // Exit early if there are no files
-    }
 
-  try {
-    for (const file of files) {
-      await fs.promises.unlink(file.path);
-      console.log('Deleted file:', file.path);
-    }
-  } catch (err) {
-    console.error('Error deleting uploaded files:', err);
-  }
-}
 
 //Pobieranie przefiltrowanych danych użytkowników
 export async function listUsers(req, res) {
@@ -49,8 +38,8 @@ export async function listUsers(req, res) {
   if (isNaN(page) || page < 1) page = 1;
 
   const deletedIds = await UserCredentials
-  .find({ isDeleted: true })
-  .distinct("_id");
+    .find({ isDeleted: true })
+    .distinct("_id");
 
   const page_size = 100;
   const user = new mongoose.Types.ObjectId(req.user.userId);
@@ -60,7 +49,7 @@ export async function listUsers(req, res) {
   if (userProfile === null) {
     return res.status(404).json({ success: false, error: "User's profile cannot be found" });
   }
-  const genderFilter = req.query.gender 
+  const genderFilter = req.query.gender
     ? [req.query.gender]
     : userProfile.preferred_gender;
   const minAge = parseInt(req.query.minAge) || userProfile.preferred_min_age;
@@ -74,10 +63,10 @@ export async function listUsers(req, res) {
   const minDate = new Date(today.getFullYear() - maxAge, today.getMonth(), today.getDate());
 
   const preferred_distance_m = preferred_distance * 1000;
-//  maxDistance: preferred_distance_m, zmieniam na chwile
-/*gender: { $in: preferred_gender },
-            preferred_gender: gender,
-            date_of_birth: { $gte: minDate, $lte: maxDate }*/
+  //  maxDistance: preferred_distance_m, zmieniam na chwile
+  /*gender: { $in: preferred_gender },
+              preferred_gender: gender,
+              date_of_birth: { $gte: minDate, $lte: maxDate }*/
   try {
     page = parseInt(page, 10) || 1;
 
@@ -88,11 +77,11 @@ export async function listUsers(req, res) {
           distanceField: "distance",
           maxDistance: distance * 1000,
           query: {
-            user_id: { $ne: user,$nin: deletedIds },
+            user_id: { $ne: user, $nin: deletedIds },
             gender: { $in: genderFilter },
             preferred_gender: gender,
             date_of_birth: { $gte: minDate, $lte: maxDate }
-            
+
           },
           spherical: true
         }
@@ -228,16 +217,11 @@ export async function showMyProfile(req, res) {
 //Tworzenie danych profilu
 export async function addUser(req, res) {
 
-  console.log(req.files);
-  console.log(req.body);
   const id = req.body.user_id;
 
   const result = profileSchema.safeParse(req.body);
 
   if (!result.success) {
-    if (req.files && req.files.length > 0) {
-      await deleteUploadedFiles(req.files);
-    }
     return res.status(400).json({ success: false, error: z.flattenError(result.error) });
   }
 
@@ -249,21 +233,35 @@ export async function addUser(req, res) {
     return res.status(400).json({ success: false, error: "At least one profile image is required" });
   }
 
+
+
   let images_paths = [];
 
+  for (let photo of photos) {
+    const base64 = photo.buffer.toString("base64");
+    const dataURI = `data:${photo.mimetype};base64,${base64}`;
 
-  for (let i = 0; i < photos.length; i++) {
-    images_paths.push(`/uploads/${photos[i].filename}`);
-  };
+    try {
+      let imageId = await uploadImage(dataURI);
+      images_paths.push({ id: imageId, url: cloudinary.url(imageId) });
+    }
+    catch (err) {
+      console.error(err);
+      return res.status(500).json({ success: false, error: "Uploading images unsuccessful" });
+    }
 
-  const coordinates = [longitude, latitude];
+  }
 
   const user = await UserData.findOne({ user_id: id });
 
   if (user !== null) {
-    await deleteUploadedFiles(req.files);
+    await deleteUploadedFiles(images_paths);
     return res.status(409).json({ success: false, error: "User's profile already exists" });
   }
+
+  const coordinates = [longitude, latitude];
+
+
 
   const newProfile = {
     user_id: id,
@@ -282,6 +280,8 @@ export async function addUser(req, res) {
     images_paths: images_paths
   };
 
+  console.log(images_paths);
+
   try {
     await UserData.create(newProfile);
   }
@@ -291,7 +291,7 @@ export async function addUser(req, res) {
     return res.status(500).json({ success: false, error: "A database error has occured" });
   }
 
-  res.status(201).json({ success: true, data: newProfile });
+  return res.status(201).json({ success: true, data: newProfile });
 };
 
 //Aktualizacja danych w profilu zalogowanego użytkownika
@@ -300,20 +300,17 @@ export async function updateUser(req, res) {
   const id = req.params.id;
   const userId = req.user.userId;
 
-  if (id!==userId){
-    await deleteUploadedFiles(req.files);
-    return res.status(400).json({success: false, error: "You cannot modify another users profile"});
+  if (id !== userId) {
+    return res.status(400).json({ success: false, error: "You cannot modify another users profile" });
   }
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    await deleteUploadedFiles(req.files);
     return res.status(400).json({ success: false, error: "Invalid user id" });
   }
 
   const user = await UserData.findOne({ user_id: id });
 
   if (!user) {
-    await deleteUploadedFiles(req.files);
     return res.status(404).json({ success: false, error: "User profile not found" });
   }
 
@@ -321,58 +318,53 @@ export async function updateUser(req, res) {
   const result = patchSchema.safeParse(req.body);
 
   if (!result.success) {
-    await deleteUploadedFiles(req.files);
     return res.status(400).json({ success: false, error: z.flattenError(result.error) });
   }
 
   const updateData = result.data;
 
-  if (updateData.latitude !== undefined && updateData.longitude !== undefined) {
-    updateData.location = {
-      coordinates: [updateData.longitude, updateData.latitude]
-    }
-    delete updateData.latitude;
-    delete updateData.longitude;
-  }
-
-  else if (updateData.latitude !== undefined || updateData.longitude !== undefined) {
-    await deleteUploadedFiles(req.files);
-    return res.status(400).json({ success: false, error: "Both latitude and longitude must be provided together" });
-  }
 
   let newUserImages = [...user.images_paths];
-  const photosToDelete = req.body.photos_to_delete || [];
+  let photosToDelete = req.body.photos_to_delete || [];
+  if (!Array.isArray(photosToDelete)) {
+    photosToDelete = [photosToDelete];
+  }
+  console.log(photosToDelete);
 
 
   if (photosToDelete.length > 0) {
-  newUserImages = newUserImages.filter(img => {
-    const filename = path.basename(img);
-    return !photosToDelete.includes(filename);
-  });
-}
+    newUserImages = newUserImages.filter(img => !photosToDelete.includes(img.id));
+  }
 
-  const newPhotos = req.files || [];
+  const uploadedPhotos = [];
 
-  if (newPhotos.length > 0) {
-    for (let i = 0; i < newPhotos.length; i++) {
-      newUserImages.push(`/uploads/${newPhotos[i].filename}`);
+  if (req.files?.length > 0) {
+    for (let photo of req.files) {
+      const base64 = photo.buffer.toString("base64");
+      const dataURI = `data:${photo.mimetype};base64,${base64}`;
+
+      try {
+        let imageId = await uploadImage(dataURI);
+        uploadedPhotos.push({ id: imageId, url: cloudinary.url(imageId) });
+      }
+      catch (err) {
+        await deleteUploadedFiles(uploadedPhotos.map(image => image.id));
+        console.error(err);
+        return res.status(500).json({ success: false, error: "Uploading images unsuccessful" });
+      }
     }
   }
 
+  newUserImages = newUserImages.concat(uploadedPhotos);
+
   if (newUserImages.length === 0) {
-    await deleteUploadedFiles(req.files);
+    await deleteUploadedFiles(uploadedPhotos.map(image => image.id));
     return res.status(400).json({ success: false, error: "At least one profile image is required" });
   }
 
   if (photosToDelete.length > 0) {
     try {
-      await Promise.all(
-        photosToDelete.map(path =>
-          fs.promises.unlink(path).catch(err =>
-            console.error(`Failed to delete ${path}:`, err)
-          )
-        )
-      );
+      await deleteUploadedFiles(photosToDelete);
     } catch (err) {
       console.error('Error deleting photos:', err);
     }
@@ -388,7 +380,7 @@ export async function updateUser(req, res) {
 
     return res.json({ success: true, data: updatedUser });
   } catch (err) {
-    await deleteUploadedFiles(req.files);
+    await deleteUploadedFiles(uploadedPhotos.map(p => p.id));
     console.error(`An error occured while trying to update the UserData object: ${err}`);
     return res.status(500).json({ success: false, error: "A database error has occurred" });
   }
@@ -425,11 +417,11 @@ export async function reportUser(req, res) {
   const now = new Date();
 
   const newReport = {
-     reporter_id: id,                    // zamiast reporter_id
-  reported_user_id: otherId,       // zostaje
-  created_at: now,
-  text_content: textContent,
-  inspected: false
+    reporter_id: id,                    // zamiast reporter_id
+    reported_user_id: otherId,       // zostaje
+    created_at: now,
+    text_content: textContent,
+    inspected: false
   };
 
   try {
@@ -516,7 +508,7 @@ export async function likeUser(req, res) {
 
 };
 
-export async function updateLocation(req,res) {
+export async function updateLocation(req, res) {
   const id = req.user.userId;
   const { latitude, longitude } = req.body;
 
@@ -525,7 +517,7 @@ export async function updateLocation(req,res) {
   }
 
   try {
-     const user = await UserData.findOneAndUpdate(
+    const user = await UserData.findOneAndUpdate(
       { user_id: id },
       {
         $set: {

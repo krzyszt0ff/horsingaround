@@ -12,7 +12,7 @@
         >
           <template v-if="photo.url">
             <img
-              :src="photo.isExisting ? (SERVER_BASE_URL + photo.url) : photo.url"
+              :src="photo.isExisting ? (photo.url) : photo.url"
               alt="Uploaded"
             />
             
@@ -64,7 +64,6 @@ const newFiles = ref([]);
 const isSaving = ref(false);
 const errorMsg = ref('');
 
-const extractFilename = (path) => path.split('/').pop();
 
 onMounted(async () => {
   if (!store.user) await store.loadUser();
@@ -73,8 +72,8 @@ onMounted(async () => {
 
 const combinedPhotos = computed(() => {
   const slots = [];
-  existingPhotos.value.forEach(path => {
-    slots.push({ url: path, isExisting: true });
+  existingPhotos.value.forEach(image => {
+    slots.push({id: image.id, url: image.url, isExisting: true });
   });
   newFiles.value.forEach(file => {
     slots.push({ url: URL.createObjectURL(file), isExisting: false });
@@ -103,9 +102,8 @@ function handleFileChange(event) {
 
 function handleRemove(index, photo) {
   if (photo.isExisting) {
-    const filename = extractFilename(photo.url);
-    deletedFromExisting.value.push(filename);
-    existingPhotos.value = existingPhotos.value.filter(p => p !== photo.url);
+    deletedFromExisting.value.push(photo.id);
+    existingPhotos.value = existingPhotos.value.filter(p => p.url !== photo.url);
   } else {
     const idxInNew = index - existingPhotos.value.length;
     newFiles.value.splice(idxInNew, 1);
@@ -113,6 +111,7 @@ function handleRemove(index, photo) {
 }
 
 async function saveChanges() {
+  console.log("Deleting:", deletedFromExisting.value);
   if (existingPhotos.value.length + newFiles.value.length < 1) {
     errorMsg.value = "At least one photo is required.";
     return;

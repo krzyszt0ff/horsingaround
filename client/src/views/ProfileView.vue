@@ -18,7 +18,7 @@
 
         <img 
             class="profile-photo-bg" 
-            :src="SERVER_BASE_URL + store.user.images_paths[currentImageIndex]" 
+            :src="store.user.images_paths[currentImageIndex].url" 
             alt="Profile" 
         />
         

@@ -16,7 +16,7 @@ import matchesRouter from './routes/matches.js';
 import { authMiddleware } from './middleware/authMiddleware.js';
 
 import setupSocket from "./socket/socket.js";
-import { parse } from "node:path";
+
 
 const PORT = parseInt(process.env.PORT);
 

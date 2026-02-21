@@ -22,7 +22,7 @@ const userDataSchema = new mongoose.Schema({
     preferred_min_age: {type: Number, required: true},
     preferred_max_age: {type: Number, required: true},
     preferred_distance: {type: Number, required: true},
-    images_paths: {type: [String], required: true}
+    images_paths: {type: [Object], required: true}
 
 });
 

@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useRegistrationStore } from '@/stores/registration';
 import { z } from 'zod';
@@ -70,6 +70,17 @@ const registrationSchema = z.object({
   path: ['repeatPassword'],
 });
 
+onMounted(() => {
+  const step1 = store.getStep1;
+
+  if (step1 && Object.keys(step1).length !== 0) {
+    email.value = step1.email ?? '';
+    password.value = step1.password ?? '';
+    repeatPassword.value = step1.repeatPassword ?? '';
+  }
+
+});
+
 async function handleNext() {
   // wyczyszczenie błędów
   errors.value = {
@@ -98,6 +109,7 @@ async function handleNext() {
   store.updateStep('step1', {
     email: email.value,
     password: password.value,
+    repeatPassword: repeatPassword.value
   });
 
   router.push('/signup/step2');

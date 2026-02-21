@@ -7,7 +7,11 @@ export const useRegistrationStore = defineStore('registration', {
         step3: {},
     }),
     getters: {
-        allData: (state) => ({...state.step1, ...state.step2, ...state.step3})
+        allData: (state) => ({...state.step1, ...state.step2, ...state.step3}),
+        getStep1: (state) => ({...state.step1}),
+        getStep2: (state) => ({...state.step2}),
+        getStep3: (state) => ({...state.step3})
+        
     },
     actions: {
         updateStep(step, data) {

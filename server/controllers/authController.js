@@ -20,6 +20,7 @@ export async function register(req, res) {
     const user = await UserCredentials.findOne({ email: email });
     
       if (user !== null) {
+        console.log("User found: " + user);
         return res.status(409).json({ success: false, error: "User with such email already exists" });
       }
 
@@ -121,7 +122,7 @@ export async function login(req, res) {
         maxAge: 1000 * 60 * 60 * 24
     });
 
-    return res.status(200).json({success: true});
+    return res.status(200).json({success: true, token: token});
     
 }
 

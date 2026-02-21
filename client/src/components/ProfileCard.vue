@@ -15,7 +15,7 @@
       <img 
         v-if="user?.images_paths?.length"
         class="profile-photo" 
-        :src="SERVER_BASE_URL + user.images_paths[currentImageIndex]" 
+        :src="user.images_paths[currentImageIndex].url" 
         alt="Profile" 
       />
         

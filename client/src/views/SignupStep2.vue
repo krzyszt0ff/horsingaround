@@ -3,20 +3,12 @@
     <div class="form-box">
       <h1>Personal info</h1>
 
-      <input
-        type="text"
-        v-model="name"
-        placeholder="Your name"
-      />
+      <input type="text" v-model="name" placeholder="Your name" />
       <p v-if="errors.name" class="error-text">{{ errors.name }}</p>
 
       <select v-model="gender">
         <option disabled value="">Gender</option>
-        <option
-          v-for="opt in GENDER_OPTIONS"
-          :key="opt.value"
-          :value="opt.value"
-        >
+        <option v-for="opt in GENDER_OPTIONS" :key="opt.value" :value="opt.value">
           {{ opt.label }}
         </option>
       </select>
@@ -24,16 +16,8 @@
 
       <label>Looking for:</label>
       <div class="checkbox-group">
-        <label
-          v-for="opt in GENDER_OPTIONS"
-          :key="opt.value"
-          class="checkbox-item"
-        >
-          <input
-            type="checkbox"
-            :value="opt.value"
-            v-model="preferredGenders"
-          />
+        <label v-for="opt in GENDER_OPTIONS" :key="opt.value" class="checkbox-item">
+          <input type="checkbox" :value="opt.value" v-model="preferredGenders" />
           {{ opt.label }}
         </label>
       </div>
@@ -49,32 +33,16 @@
 
       <label>Age range:</label>
       <div class="range-box">
-        <input
-          type="number"
-          v-model="age_min"
-          min="18"
-          max="99"
-          placeholder="From"
-        />
+        <input type="number" v-model="age_min" min="18" max="99" placeholder="From" />
         <span>-</span>
-        <input
-          type="number"
-          v-model="age_max"
-          min="18"
-          max="99"
-          placeholder="To"
-        />
+        <input type="number" v-model="age_max" min="18" max="99" placeholder="To" />
       </div>
       <p v-if="errors.age_min || errors.age_max" class="error-text">
         {{ errors.age_min || errors.age_max }}
       </p>
       <label>Bio</label>
-      <textarea
-        class="bio-textarea"
-        v-model="bio"
-        placeholder="Tell us something about yourself..."
-        rows="3"
-      ></textarea>
+      <textarea class="bio-textarea" v-model="bio" placeholder="Tell us something about yourself..."
+        rows="3"></textarea>
       <div class="bio-footer">
         <p v-if="errors.bio" class="error-text">{{ errors.bio }}</p>
         <span class="char-count" :class="{ 'limit-reached': bio.length > 500 }">
@@ -92,7 +60,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useRegistrationStore } from '@/stores/registration';
 import { GENDER_OPTIONS } from '@/constants/genders';
@@ -108,6 +76,7 @@ const dateOfBirth = ref('');
 const age_min = ref('');
 const age_max = ref('');
 const bio = ref(''); //dodawanie bio, bo ciągle było na sztywno
+
 
 // błędy walidacji
 const errors = ref({
@@ -125,7 +94,8 @@ const registrationSchema = z
   .object({
     name: z
       .string()
-      .min(3, 'Your name must be at least 3 characters'),
+      .min(3, 'Your name must be at least 3 characters')
+      .max(30, 'Please, we know your name is not that long. It cannot exceed 30 characters'),
     gender: z
       .string()
       .min(1, 'Please select your gender!'),
@@ -143,8 +113,8 @@ const registrationSchema = z
           today.getFullYear() -
           birth.getFullYear() -
           (today.getMonth() < birth.getMonth() ||
-          (today.getMonth() === birth.getMonth() &&
-            today.getDate() < birth.getDate())
+            (today.getMonth() === birth.getMonth() &&
+              today.getDate() < birth.getDate())
             ? 1
             : 0);
 
@@ -153,11 +123,13 @@ const registrationSchema = z
     age_min: z
       .coerce
       .number()
-      .min(18, 'Minimal age must be at least 18'),
+      .min(18, 'Minimal age must be at least 18')
+      .max(99, 'Minimal age cannot be greater than 99'),
     age_max: z
       .coerce
       .number()
-      .min(18, 'Maximal age must be at least 18'),
+      .min(18, 'Maximal age must be at least 18')
+      .max(99, 'Maximal age cannot be greater than 99'),
     bio: z
       .string()
       .trim()
@@ -168,6 +140,20 @@ const registrationSchema = z
     message: 'Your minimal preferred age should be lower than the maximal!',
     path: ['age_min'],
   });
+
+onMounted(() => {
+  const step2 = store.getStep2;
+
+  if (step2 && Object.keys(step2).length !== 0) {
+    name.value = step2.name ?? '';
+    gender.value = step2.gender ?? '';
+    preferredGenders.value = step2.preferredGenders ?? [];
+    dateOfBirth.value = step2.dateOfBirth ?? '';
+    age_min.value = step2.age_min ?? '';
+    age_max.value = step2.age_max ?? '';
+    bio.value = step2.bio ?? '';
+  }
+});
 
 async function handleNext() {
   // wyczyść błędy

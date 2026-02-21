@@ -26,7 +26,7 @@ export const profileSchema = z.object({
   preferred_min_age: z.preprocess(val => parseInt(val), z.number().gte(18).lte(99)),
   preferred_max_age: z.preprocess(val => parseInt(val), z.number().gte(18).lte(99)),
   preferred_distance: z.preprocess(val => parseFloat(val), z.number().nonnegative().gte(0.1).transform(val => Math.round(val * 10) / 10)),
-  images_paths: z.array(z.string()).min(1).optional()
+  images_paths: z.array(z.object()).min(1).optional()
 }).refine(
   (profile) => profile.preferred_min_age < profile.preferred_max_age,
   { message: "Minimal age cannot be greater than maximal age" }

@@ -8,23 +8,8 @@ import { listUsers, addUser, updateUser, showUser, showMyProfile, reportUser, li
 
 const router = express.Router();
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null,  path.join(process.cwd(), './uploads/')),
-    filename: (req, file, cb) => cb(null, `${crypto.randomBytes(16).toString("hex")}${path.extname(file.originalname)}`)
-})
-
-const fileFilter = (req, file, cb) => {
-  console.log('Multer file mimetype:', file.mimetype);
-  const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
-  
-  if (allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only image files are allowed"), false);
-  }
-};
-
-const upload = multer({storage, fileFilter});
+const storage = multer.memoryStorage();
+const upload = multer({storage, limits: {fileSize: 5 * 1024 * 1024}});
 
 
 //zwraca przefiltrowaną wg preferencji listę użytkowników
@@ -136,7 +121,7 @@ router.patch('/location', authMiddleware, updateLocation);
 //INPUT
 //  * analogicznie do tworzenia profilu (form-data i nazwy pól), ale nie trzeba wszystkich pól, tylko te zmienione wystarczą
 //  * WAŻNE!!! W przypadku modyfikacji zdjęć, przesyłacie w formdata TYLKO ZDJĘCIA NOWE (jeżeli są) w polu photos 
-//    oraz w polu photos_to_delete ścieżki ze zdjęciami do usunięcia (o ile takie są) - tak jak wyżej, jeżeli jest ich kilka to robicie kilka appendów do tego pola,
+//    oraz w polu photos_to_delete id zdjęć do usunięcia (o ile takie są) - tak jak wyżej, jeżeli jest ich kilka to robicie kilka appendów do tego pola,
 //    nie przesyłacie listy aktualnych zdjęć
 //  * jeżeli aktualizowane są współrzędne, to musi być przekazane longitude i latitude, nie tylko jedno!
 //OUTPUT: {success: true, profile: }
@@ -156,6 +141,5 @@ router.post('/:id/report', reportUser);
 //  * NIE MA MATCHA: { success: true, like: , match_created: false }
 router.post('/:id/like', likeUser);
 
-//router.delete("/:id", deleteUser); ??
 
 export default router;
